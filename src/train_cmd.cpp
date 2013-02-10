@@ -90,7 +90,7 @@ void CheckTrainsLengths()
 
 	FOR_ALL_TRAINS(v) {
 		if (v->First() == v && !(v->vehstatus & VS_CRASHED)) {
-			for (const Train *u = v, *w = v->Next(); w != NULL; u = w, w = w->Next()) {
+			for (const Train *u = v->GetMovingFront(), *w = u->GetMovingNext(); w != NULL; u = w, w = w->GetMovingNext()) {
 				if (u->track != TRACK_BIT_DEPOT) {
 					if ((w->track != TRACK_BIT_DEPOT &&
 							max(abs(u->x_pos - w->x_pos), abs(u->y_pos - w->y_pos)) != u->CalcNextVehicleOffset()) ||

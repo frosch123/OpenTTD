@@ -431,7 +431,7 @@ struct NewsWindow : Window {
 
 			default:
 				if (this->ni->reftype1 == NR_VEHICLE) {
-					const Vehicle *v = Vehicle::Get(this->ni->ref1);
+					const Vehicle *v = Vehicle::Get(this->ni->ref1)->GetMovingFront();
 					ScrollMainWindowTo(v->x_pos, v->y_pos, v->z_pos);
 				} else {
 					TileIndex tile1 = GetReferenceTile(this->ni->reftype1, this->ni->ref1);
