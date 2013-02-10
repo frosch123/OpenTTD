@@ -1481,8 +1481,8 @@ GetNewVehiclePosResult GetNewVehiclePos(const Vehicle *v)
 		-1, 0, 1, 1, 1, 0,-1,-1, /* y */
 	};
 
-	int x = v->x_pos + _delta_coord[v->direction];
-	int y = v->y_pos + _delta_coord[v->direction + 8];
+	int x = v->x_pos + _delta_coord[v->GetMovingDirection()];
+	int y = v->y_pos + _delta_coord[v->GetMovingDirection() + 8];
 
 	GetNewVehiclePosResult gp;
 	gp.x = x;
@@ -1512,7 +1512,7 @@ Direction GetDirectionTowards(const Vehicle *v, int x, int y)
 		i++;
 	}
 
-	Direction dir = v->direction;
+	Direction dir = v->GetMovingDirection();
 
 	DirDiff dirdiff = DirDifference(_new_direction_table[i], dir);
 	if (dirdiff == DIRDIFF_SAME) return dir;

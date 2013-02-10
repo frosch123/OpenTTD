@@ -165,7 +165,7 @@ struct GroundVehicle : public SpecializedVehicle<T, Type> {
 		/* The following code does this: */
 
 		if (HasBit(this->gv_flags, GVF_GOINGUP_BIT)) {
-			switch (this->direction) {
+			switch (this->GetMovingDirection()) {
 				case DIR_NE:
 					this->z_pos += (this->x_pos & 1); break;
 				case DIR_SW:
@@ -177,7 +177,7 @@ struct GroundVehicle : public SpecializedVehicle<T, Type> {
 				default: break;
 			}
 		} else if (HasBit(this->gv_flags, GVF_GOINGDOWN_BIT)) {
-			switch (this->direction) {
+			switch (this->GetMovingDirection()) {
 				case DIR_NE:
 					this->z_pos -= (this->x_pos & 1); break;
 				case DIR_SW:
@@ -206,7 +206,7 @@ struct GroundVehicle : public SpecializedVehicle<T, Type> {
 				return;
 			}
 			/* DirToDiagDir() is a simple right shift */
-			DiagDirection dir = DirToDiagDir(this->direction);
+			DiagDirection dir = DirToDiagDir(this->GetMovingDirection());
 			/* Read variables, so the compiler knows the access doesn't trap */
 			int8 x_pos = this->x_pos;
 			int8 y_pos = this->y_pos;

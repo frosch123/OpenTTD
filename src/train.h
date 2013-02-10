@@ -48,7 +48,7 @@ void CheckTrainsLengths();
 void FreeTrainTrackReservation(const Train *v, TileIndex origin = INVALID_TILE, Trackdir orig_td = INVALID_TRACKDIR);
 bool TryPathReserve(Train *v, bool mark_as_stuck = false, bool first_tile_okay = false);
 
-int GetTrainStopLocation(StationID station_id, TileIndex tile, const Train *v, int *station_ahead, int *station_length);
+int GetTrainStopLocation(StationID station_id, TileIndex tile, const Train *moving_front, int *station_ahead, int *station_length);
 
 void GetTrainSpriteSize(EngineID engine, uint &width, uint &height, int &xoffs, int &yoffs, EngineImageType image_type);
 
@@ -157,7 +157,7 @@ struct Train FINAL : public GroundVehicle<Train, VEH_TRAIN> {
 		 * longer than the part after the center. This means we have to round up the
 		 * length of the next vehicle but may not round the length of the current
 		 * vehicle. */
-		return this->gcache.cached_veh_length / 2 + (this->Next() != NULL ? this->Next()->gcache.cached_veh_length + 1 : 0) / 2;
+		return this->gcache.cached_veh_length / 2 + (this->GetMovingNext() != NULL ? this->GetMovingNext()->gcache.cached_veh_length + 1 : 0) / 2;
 	}
 
 protected: // These functions should not be called outside acceleration code.

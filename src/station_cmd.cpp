@@ -3092,7 +3092,7 @@ static VehicleEnterTileStatus VehicleEnter_Station(Vehicle *v, TileIndex tile, i
 	if (v->type == VEH_TRAIN) {
 		StationID station_id = GetStationIndex(tile);
 		if (!v->current_order.ShouldStopAtStation(v, station_id)) return VETSB_CONTINUE;
-		if (!IsRailStation(tile) || !v->IsFrontEngine()) return VETSB_CONTINUE;
+		if (!IsRailStation(tile) || !v->IsMovingFront()) return VETSB_CONTINUE;
 
 		int station_ahead;
 		int station_length;
@@ -3104,7 +3104,7 @@ static VehicleEnterTileStatus VehicleEnter_Station(Vehicle *v, TileIndex tile, i
 		 * vehicle is on, so we need to subtract that. */
 		if (!IsInsideBS(stop + station_ahead, station_length, TILE_SIZE)) return VETSB_CONTINUE;
 
-		DiagDirection dir = DirToDiagDir(v->direction);
+		DiagDirection dir = DirToDiagDir(v->GetMovingDirection());
 
 		x &= 0xF;
 		y &= 0xF;

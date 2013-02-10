@@ -2857,21 +2857,21 @@ static VehicleEnterTileStatus VehicleEnter_Track(Vehicle *u, TileIndex tile, int
 		/* make sure a train is not entering the tile from behind */
 		return VETSB_CANNOT_ENTER;
 	} else if (_fractcoords_enter[dir] == fract_coord) {
-		if (DiagDirToDir(ReverseDiagDir(dir)) == v->direction) {
+		if (DiagDirToDir(ReverseDiagDir(dir)) == v->GetMovingDirection()) {
 			/* enter the depot */
 			v->track = TRACK_BIT_DEPOT,
 			v->vehstatus |= VS_HIDDEN; // hide it
 			v->direction = ReverseDir(v->direction);
-			if (v->Next() == NULL) VehicleEnterDepot(v->First());
+			if (v->GetMovingNext() == NULL) VehicleEnterDepot(v->First());
 			v->tile = tile;
 
 			InvalidateWindowData(WC_VEHICLE_DEPOT, v->tile);
 			return VETSB_ENTERED_WORMHOLE;
 		}
 	} else if (fract_coord_leave == fract_coord) {
-		if (DiagDirToDir(dir) == v->direction) {
+		if (DiagDirToDir(dir) == v->GetMovingDirection()) {
 			/* leave the depot? */
-			if ((v = v->Next()) != NULL) {
+			if ((v = v->GetMovingNext()) != NULL) {
 				v->vehstatus &= ~VS_HIDDEN;
 				v->track = (DiagDirToAxis(dir) == AXIS_X ? TRACK_BIT_X : TRACK_BIT_Y);
 			}

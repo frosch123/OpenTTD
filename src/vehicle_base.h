@@ -273,6 +273,14 @@ public:
 	 */
 	virtual void UpdateDeltaXY(Direction direction) {}
 
+	bool IsMovingFront() const { return this->IsFrontEngine(); }
+	Vehicle *GetMovingFront() const { return this->First(); }
+	Vehicle *GetMovingBack() const { return this->Last(); }
+	Vehicle *GetMovingNext() const { return this->Next(); }
+	Vehicle *GetMovingPrev() const { return this->Previous(); }
+	Direction GetMovingDirection() const { return this->direction; }
+	void SetMovingDirection(Direction d) { this->direction = d; }
+
 	/**
 	 * Determines the effective direction-specific vehicle movement speed.
 	 *
@@ -288,7 +296,7 @@ public:
 	 */
 	inline uint GetOldAdvanceSpeed(uint speed)
 	{
-		return (this->direction & 1) ? speed : speed * 3 / 4;
+		return (this->GetMovingDirection() & 1) ? speed : speed * 3 / 4;
 	}
 
 	/**
@@ -317,7 +325,7 @@ public:
 	 */
 	inline uint GetAdvanceDistance()
 	{
-		return (this->direction & 1) ? 192 : 256;
+		return (this->GetMovingDirection() & 1) ? 192 : 256;
 	}
 
 	/**
@@ -501,20 +509,9 @@ public:
 	 * Get the last vehicle of this vehicle chain.
 	 * @return the last vehicle of the chain.
 	 */
-	inline Vehicle *Last()
+	inline Vehicle *Last() const
 	{
-		Vehicle *v = this;
-		while (v->Next() != NULL) v = v->Next();
-		return v;
-	}
-
-	/**
-	 * Get the last vehicle of this vehicle chain.
-	 * @return the last vehicle of the chain.
-	 */
-	inline const Vehicle *Last() const
-	{
-		const Vehicle *v = this;
+		Vehicle *v = const_cast<Vehicle*>(this);
 		while (v->Next() != NULL) v = v->Next();
 		return v;
 	}
@@ -886,6 +883,11 @@ struct SpecializedVehicle : public Vehicle {
 	 * Set vehicle type correctly
 	 */
 	inline SpecializedVehicle<T, Type>() : Vehicle(Type) { }
+
+	inline T *GetMovingFront() const { return (T *)this->Vehicle::GetMovingFront(); }
+	inline T *GetMovingBack() const { return (T *)this->Vehicle::GetMovingBack(); }
+	inline T *GetMovingNext() const { return (T *)this->Vehicle::GetMovingNext(); }
+	inline T *GetMovingPrev() const { return (T *)this->Vehicle::GetMovingPrev(); }
 
 	/**
 	 * Get the first vehicle in the chain
