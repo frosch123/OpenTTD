@@ -1776,7 +1776,7 @@ static void AdvanceWagonsAfterSwap(Train *moving_front)
  * Turn a train around.
  * @param consist %Train to turn around.
  */
-void ReverseTrainDirection(Train *consist)
+static void ReverseTrainDirection(Train *consist)
 {
 	Train *moving_front = consist->GetMovingFront();
 	if (IsRailDepotTile(moving_front->tile)) {
@@ -1789,24 +1789,29 @@ void ReverseTrainDirection(Train *consist)
 	/* Check if we were approaching a rail/road-crossing */
 	TileIndex crossing = TrainApproachingCrossingTile(moving_front);
 
-	/* count number of vehicles */
-	int r = CountVehiclesInChain(consist) - 1;  // number of vehicles - 1
+	if (1) { // TODO
+		ToggleBit(consist->vehicle_flags, VF_DRIVING_BACKWARDS);
+		moving_front = consist->GetMovingFront();
+	} else {
+		/* count number of vehicles */
+		int r = CountVehiclesInChain(consist) - 1;  // number of vehicles - 1
 
-	AdvanceWagonsBeforeSwap(moving_front);
+		AdvanceWagonsBeforeSwap(moving_front);
 
-	/* swap start<>end, start+1<>end-1, ... */
-	int l = 0;
-	do {
-		ReverseTrainSwapVeh(consist, l++, r--);
-	} while (l <= r);
+		/* swap start<>end, start+1<>end-1, ... */
+		int l = 0;
+		do {
+			ReverseTrainSwapVeh(consist, l++, r--);
+		} while (l <= r);
 
-	AdvanceWagonsAfterSwap(moving_front);
+		AdvanceWagonsAfterSwap(moving_front);
+
+		ToggleBit(consist->flags, VRF_TOGGLE_REVERSE);
+	}
 
 	if (IsRailDepotTile(moving_front->tile)) {
 		InvalidateWindowData(WC_VEHICLE_DEPOT, moving_front->tile);
 	}
-
-	ToggleBit(consist->flags, VRF_TOGGLE_REVERSE);
 
 	ClrBit(consist->flags, VRF_REVERSING);
 
@@ -3790,7 +3795,10 @@ static bool TrainLocoHandler(Train *consist, bool mode)
 		if (!turn_around && consist->wait_counter % _settings_game.pf.path_backoff_interval != 0 && consist->force_proceed == TFP_NONE) return true;
 		if (!TryPathReserve(consist)) {
 			/* Still stuck. */
-			if (turn_around) ReverseTrainDirection(consist);
+			if (turn_around) {
+				ReverseTrainDirection(consist);
+				moving_front = consist->GetMovingFront();
+			}
 
 			if (HasBit(consist->flags, VRF_TRAIN_STUCK) && consist->wait_counter > 2 * _settings_game.pf.wait_for_pbs_path * DAY_TICKS) {
 				/* Show message to player. */
@@ -3829,10 +3837,12 @@ static bool TrainLocoHandler(Train *consist, bool mode)
 		if (consist->cur_speed == 0) consist->SetLastSpeed();
 	} else {
 		TrainCheckIfLineEnds(moving_front);
+		moving_front = moving_front->GetMovingFront();
 		/* Loop until the train has finished moving. */
 		for (;;) {
 			j -= adv_spd;
 			TrainController(moving_front, NULL);
+			moving_front = moving_front->GetMovingFront();
 			/* Don't continue to move if the train crashed. */
 			if (CheckTrainCollision(moving_front)) break;
 			/* Determine distance to next map position */

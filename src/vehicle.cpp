@@ -1306,6 +1306,7 @@ void VehicleEnterDepot(Vehicle *v)
 			t->wait_counter = 0;
 			t->force_proceed = TFP_NONE;
 			ClrBit(t->flags, VRF_TOGGLE_REVERSE);
+			ClrBit(t->vehicle_flags, VF_DRIVING_BACKWARDS);
 			t->ConsistChanged(true);
 			break;
 		}
