@@ -47,6 +47,7 @@ enum VehicleFlags {
 	VF_PATHFINDER_LOST,         ///< Vehicle's pathfinder is lost.
 	VF_SERVINT_IS_CUSTOM,       ///< Service interval is custom.
 	VF_SERVINT_IS_PERCENT,      ///< Service interval is percent.
+	VF_DRIVING_BACKWARDS,       ///< Vehicle is driving backwards.
 };
 
 /** Bit numbers used to indicate which of the #NewGRFCache values are valid. */
@@ -273,13 +274,14 @@ public:
 	 */
 	virtual void UpdateDeltaXY(Direction direction) {}
 
-	bool IsMovingFront() const { return this->IsPrimaryVehicle(); }
-	Vehicle *GetMovingFront() const { return this->First(); }
-	Vehicle *GetMovingBack() const { return this->Last(); }
-	Vehicle *GetMovingNext() const { return this->Next(); }
-	Vehicle *GetMovingPrev() const { return this->Previous(); }
-	Direction GetMovingDirection() const { return this->direction; }
-	void SetMovingDirection(Direction d) { this->direction = d; }
+	bool IsDrivingBackwards() const { return HasBit(this->First()->vehicle_flags, VF_DRIVING_BACKWARDS); }
+	bool IsMovingFront() const { return this->First()->IsPrimaryVehicle() && (this->IsDrivingBackwards() ? this->Next() : this->Previous()) == NULL; }
+	Vehicle *GetMovingFront() const { return this->IsDrivingBackwards() ? this->Last() : this->First(); }
+	Vehicle *GetMovingBack() const { return this->IsDrivingBackwards() ? this->First() : this->Last(); }
+	Vehicle *GetMovingNext() const { return this->IsDrivingBackwards() ? this->Previous() : this->Next(); }
+	Vehicle *GetMovingPrev() const { return this->IsDrivingBackwards() ? this->Next() : this->Previous(); }
+	Direction GetMovingDirection() const { return this->IsDrivingBackwards() ? ReverseDir(this->direction) : this->direction; }
+	void SetMovingDirection(Direction d) { this->direction = this->IsDrivingBackwards() ? ReverseDir(d) : d; }
 
 	/**
 	 * Determines the effective direction-specific vehicle movement speed.
