@@ -563,7 +563,7 @@ CommandCost CmdStartStopVehicle(TileIndex tile, DoCommandFlag flags, uint32 p1, 
 		if (v->type != VEH_TRAIN) v->cur_speed = 0; // trains can stop 'slowly'
 		v->MarkDirty();
 		SetWindowWidgetDirty(WC_VEHICLE_VIEW, v->index, WID_VV_START_STOP);
-		SetWindowDirty(WC_VEHICLE_DEPOT, v->tile);
+		SetWindowDirty(WC_VEHICLE_DEPOT, v->GetMovingFront()->tile);
 		SetWindowClassesDirty(GetWindowClassForVehicleType(v->type));
 	}
 	return CommandCost();
@@ -815,7 +815,7 @@ CommandCost CmdCloneVehicle(TileIndex tile, DoCommandFlag flags, uint32 p1, uint
 
 		if (cost.Failed()) {
 			/* Can't build a part, then sell the stuff we already made; clear up the mess */
-			if (w_front != NULL) DoCommand(w_front->tile, w_front->index | (1 << 20), 0, flags, GetCmdSellVeh(w_front));
+			if (w_front != NULL) DoCommand(0, w_front->index | (1 << 20), 0, flags, GetCmdSellVeh(w_front));
 			return cost;
 		}
 
@@ -835,8 +835,8 @@ CommandCost CmdCloneVehicle(TileIndex tile, DoCommandFlag flags, uint32 p1, uint
 				if (result.Failed()) {
 					/* The train can't be joined to make the same consist as the original.
 					 * Sell what we already made (clean up) and return an error.           */
-					DoCommand(w_front->tile, w_front->index | 1 << 20, 0, flags, GetCmdSellVeh(w_front));
-					DoCommand(w_front->tile, w->index       | 1 << 20, 0, flags, GetCmdSellVeh(w));
+					DoCommand(0, w_front->index | 1 << 20, 0, flags, GetCmdSellVeh(w_front));
+					DoCommand(0, w->index       | 1 << 20, 0, flags, GetCmdSellVeh(w));
 					return result; // return error and the message returned from CMD_MOVE_RAIL_VEHICLE
 				}
 			} else {
@@ -925,7 +925,7 @@ CommandCost CmdCloneVehicle(TileIndex tile, DoCommandFlag flags, uint32 p1, uint
 	if (!CheckCompanyHasMoney(total_cost)) {
 		if (flags & DC_EXEC) {
 			/* The vehicle has already been bought, so now it must be sold again. */
-			DoCommand(w_front->tile, w_front->index | 1 << 20, 0, flags, GetCmdSellVeh(w_front));
+			DoCommand(0, w_front->index | 1 << 20, 0, flags, GetCmdSellVeh(w_front));
 		}
 		return total_cost;
 	}
@@ -950,7 +950,7 @@ static CommandCost SendAllVehiclesToDepot(DoCommandFlag flags, bool service, con
 	bool had_success = false;
 	for (uint i = 0; i < list.Length(); i++) {
 		const Vehicle *v = list[i];
-		CommandCost ret = DoCommand(v->tile, v->index | (service ? DEPOT_SERVICE : 0U) | DEPOT_DONT_CANCEL, 0, flags, GetCmdSendToDepot(vli.vtype));
+		CommandCost ret = DoCommand(0, v->index | (service ? DEPOT_SERVICE : 0U) | DEPOT_DONT_CANCEL, 0, flags, GetCmdSendToDepot(vli.vtype));
 
 		if (ret.Succeeded()) {
 			had_success = true;

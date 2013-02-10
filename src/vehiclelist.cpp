@@ -90,9 +90,9 @@ void BuildDepotVehicleList(VehicleType type, TileIndex tile, VehicleList *engine
 				break;
 		}
 
-		if (!v->IsPrimaryVehicle()) continue;
+		if (!v->IsMovingFront()) continue;
 
-		*engines->Append() = v;
+		*engines->Append() = v->First();
 	}
 
 	/* Ensure the lists are not wasting too much space. If the lists are fresh

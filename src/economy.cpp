@@ -1272,7 +1272,8 @@ static void LoadUnloadVehicle(Vehicle *front, int *cargo_left)
 	StationID last_visited = front->last_station_visited;
 	Station *st = Station::Get(last_visited);
 
-	if (front->type == VEH_TRAIN && (!IsTileType(front->tile, MP_STATION) || GetStationIndex(front->tile) != st->index)) {
+	Vehicle *moving_front = front->GetMovingFront();
+	if (front->type == VEH_TRAIN && (!IsTileType(moving_front->tile, MP_STATION) || GetStationIndex(moving_front->tile) != st->index)) {
 		/* The train reversed in the station. Take the "easy" way
 		 * out and let the train just leave as it always did. */
 		SetBit(front->vehicle_flags, VF_LOADING_FINISHED);
@@ -1436,7 +1437,7 @@ static void LoadUnloadVehicle(Vehicle *front, int *cargo_left)
 						/* Try to find out if auto-refitting would succeed. In case the refit is allowed,
 						 * the returned refit capacity will be greater than zero. */
 						new_subtype = GetBestFittingSubType(v, v, cid);
-						DoCommand(v_start->tile, v_start->index, cid | 1U << 6 | new_subtype << 8 | 1U << 16, DC_QUERY_COST, GetCmdRefitVeh(v_start)); // Auto-refit and only this vehicle including artic parts.
+						DoCommand(0, v_start->index, cid | 1U << 6 | new_subtype << 8 | 1U << 16, DC_QUERY_COST, GetCmdRefitVeh(v_start)); // Auto-refit and only this vehicle including artic parts.
 						if (_returned_refit_capacity > 0) {
 							amount = cargo_left[cid] - consist_capleft[cid];
 							new_cid = cid;
@@ -1447,7 +1448,7 @@ static void LoadUnloadVehicle(Vehicle *front, int *cargo_left)
 
 			/* Refit if given a valid cargo. */
 			if (new_cid < NUM_CARGO) {
-				CommandCost cost = DoCommand(v_start->tile, v_start->index, new_cid | 1U << 6 | new_subtype << 8 | 1U << 16, DC_EXEC, GetCmdRefitVeh(v_start)); // Auto-refit and only this vehicle including artic parts.
+				CommandCost cost = DoCommand(0, v_start->index, new_cid | 1U << 6 | new_subtype << 8 | 1U << 16, DC_EXEC, GetCmdRefitVeh(v_start)); // Auto-refit and only this vehicle including artic parts.
 				if (cost.Succeeded()) front->profit_this_year -= cost.GetCost() << 8;
 				ge = &st->goods[v->cargo_type];
 			}
@@ -1571,8 +1572,8 @@ static void LoadUnloadVehicle(Vehicle *front, int *cargo_left)
 
 	if (anything_loaded || anything_unloaded) {
 		if (front->type == VEH_TRAIN) {
-			TriggerStationRandomisation(st, front->tile, SRT_TRAIN_LOADS);
-			TriggerStationAnimation(st, front->tile, SAT_TRAIN_LOADS);
+			TriggerStationRandomisation(st, moving_front->tile, SRT_TRAIN_LOADS);
+			TriggerStationAnimation(st, moving_front->tile, SAT_TRAIN_LOADS);
 		}
 	}
 
@@ -1638,7 +1639,7 @@ static void LoadUnloadVehicle(Vehicle *front, int *cargo_left)
 
 	if (front->type == VEH_TRAIN) {
 		/* Each platform tile is worth 2 rail vehicles. */
-		int overhang = front->GetGroundVehicleCache()->cached_total_length - st->GetPlatformLength(front->tile) * TILE_SIZE;
+		int overhang = front->GetGroundVehicleCache()->cached_total_length - st->GetPlatformLength(moving_front->tile) * TILE_SIZE;
 		if (overhang > 0) {
 			unloading_time <<= 1;
 			unloading_time += (overhang * unloading_time) / 8;

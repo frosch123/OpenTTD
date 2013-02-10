@@ -198,7 +198,7 @@ uint Vehicle::Crash(bool flooded)
 	InvalidateWindowClassesData(GetWindowClassForVehicleType(this->type), 0);
 	SetWindowWidgetDirty(WC_VEHICLE_VIEW, this->index, WID_VV_START_STOP);
 	SetWindowDirty(WC_VEHICLE_DETAILS, this->index);
-	SetWindowDirty(WC_VEHICLE_DEPOT, this->tile);
+	SetWindowDirty(WC_VEHICLE_DEPOT, this->GetMovingFront()->tile);
 
 	delete this->cargo_payment;
 	this->cargo_payment = NULL;
@@ -1366,7 +1366,7 @@ void VehicleEnterDepot(Vehicle *v)
 
 		if (t.IsRefit()) {
 			Backup<CompanyByte> cur_company(_current_company, v->owner, FILE_LINE);
-			CommandCost cost = DoCommand(v->tile, v->index, t.GetRefitCargo() | t.GetRefitSubtype() << 8, DC_EXEC, GetCmdRefitVeh(v));
+			CommandCost cost = DoCommand(0, v->index, t.GetRefitCargo() | t.GetRefitSubtype() << 8, DC_EXEC, GetCmdRefitVeh(v));
 			cur_company.Restore();
 
 			if (cost.Failed()) {
@@ -1873,7 +1873,7 @@ void Vehicle::DeleteUnreachedImplicitOrders()
  */
 void Vehicle::BeginLoading()
 {
-	assert(IsTileType(this->tile, MP_STATION) || this->type == VEH_SHIP);
+	assert(IsTileType(this->GetMovingFront()->tile, MP_STATION) || this->type == VEH_SHIP);
 
 	if (this->current_order.IsType(OT_GOTO_STATION) &&
 			this->current_order.GetDestination() == this->last_station_visited) {
@@ -2001,9 +2001,10 @@ void Vehicle::LeaveStation()
 
 	if (this->type == VEH_TRAIN && !(this->vehstatus & VS_CRASHED)) {
 		/* Trigger station animation (trains only) */
-		if (IsTileType(this->tile, MP_STATION)) {
-			TriggerStationRandomisation(st, this->tile, SRT_TRAIN_DEPARTS);
-			TriggerStationAnimation(st, this->tile, SAT_TRAIN_DEPARTS);
+		TileIndex tile = this->GetMovingFront()->tile;
+		if (IsTileType(tile, MP_STATION)) {
+			TriggerStationRandomisation(st, tile, SRT_TRAIN_DEPARTS);
+			TriggerStationAnimation(st, tile, SAT_TRAIN_DEPARTS);
 		}
 
 		SetBit(Train::From(this)->flags, VRF_LEAVING_STATION);
@@ -2112,7 +2113,7 @@ CommandCost Vehicle::SendToDepot(DoCommandFlag flags, DepotCommand command)
 		SetWindowWidgetDirty(WC_VEHICLE_VIEW, this->index, WID_VV_START_STOP);
 
 		/* If there is no depot in front, reverse automatically (trains only) */
-		if (this->type == VEH_TRAIN && reverse) DoCommand(this->tile, this->index, 0, DC_EXEC, CMD_REVERSE_TRAIN_DIRECTION);
+		if (this->type == VEH_TRAIN && reverse) DoCommand(0, this->index, 0, DC_EXEC, CMD_REVERSE_TRAIN_DIRECTION);
 
 		if (this->type == VEH_AIRCRAFT) {
 			Aircraft *a = Aircraft::From(this);
@@ -2219,12 +2220,13 @@ void Vehicle::ShowVisualEffect() const
 	uint max_speed = this->vcache.cached_max_speed;
 	if (this->type == VEH_TRAIN) {
 		const Train *t = Train::From(this);
+		const Train *moving_front = t->GetMovingFront();
 		/* For trains, do not show any smoke when:
 		 * - the train is reversing
 		 * - is entering a station with an order to stop there and its speed is equal to maximum station entering speed
 		 */
 		if (HasBit(t->flags, VRF_REVERSING) ||
-				(IsRailStationTile(t->tile) && t->IsFrontEngine() && t->current_order.ShouldStopAtStation(t, GetStationIndex(t->tile)) &&
+				(IsRailStationTile(moving_front->tile) && t->IsFrontEngine() && t->current_order.ShouldStopAtStation(t, GetStationIndex(moving_front->tile)) &&
 				t->cur_speed >= t->Train::GetCurrentMaxSpeed())) {
 			return;
 		}

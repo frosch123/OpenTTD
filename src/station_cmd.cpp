@@ -1248,9 +1248,11 @@ CommandCost CmdBuildRailStation(TileIndex tile_org, DoCommandFlag flags, uint32 
 					if (v != NULL) {
 						FreeTrainTrackReservation(v);
 						*affected_vehicles.Append() = v;
-						if (IsRailStationTile(v->tile)) SetRailStationPlatformReservation(v->tile, TrackdirToExitdir(v->GetVehicleTrackdir()), false);
-						for (; v->Next() != NULL; v = v->Next()) { }
-						if (IsRailStationTile(v->tile)) SetRailStationPlatformReservation(v->tile, TrackdirToExitdir(ReverseTrackdir(v->GetVehicleTrackdir())), false);
+
+						Train *moving_front = v->GetMovingFront();
+						Train *moving_back = v->GetMovingBack();
+						if (IsRailStationTile(moving_front->tile)) SetRailStationPlatformReservation(moving_front->tile, TrackdirToExitdir(moving_front->GetVehicleTrackdir()), false);
+						if (IsRailStationTile(moving_back->tile)) SetRailStationPlatformReservation(moving_back->tile, TrackdirToExitdir(ReverseTrackdir(moving_back->GetVehicleTrackdir())), false);
 					}
 				}
 
@@ -1302,10 +1304,11 @@ CommandCost CmdBuildRailStation(TileIndex tile_org, DoCommandFlag flags, uint32 
 		for (uint i = 0; i < affected_vehicles.Length(); ++i) {
 			/* Restore reservations of trains. */
 			Train *v = affected_vehicles[i];
-			if (IsRailStationTile(v->tile)) SetRailStationPlatformReservation(v->tile, TrackdirToExitdir(v->GetVehicleTrackdir()), true);
+			Train *moving_front = v->GetMovingFront();
+			Train *moving_back = v->GetMovingBack();
+			if (IsRailStationTile(moving_front->tile)) SetRailStationPlatformReservation(moving_front->tile, TrackdirToExitdir(moving_front->GetVehicleTrackdir()), true);
 			TryPathReserve(v, true, true);
-			for (; v->Next() != NULL; v = v->Next()) { }
-			if (IsRailStationTile(v->tile)) SetRailStationPlatformReservation(v->tile, TrackdirToExitdir(ReverseTrackdir(v->GetVehicleTrackdir())), true);
+			if (IsRailStationTile(moving_back->tile)) SetRailStationPlatformReservation(moving_back->tile, TrackdirToExitdir(ReverseTrackdir(moving_back->GetVehicleTrackdir())), true);
 		}
 
 		/* Check whether we need to expand the reservation of trains already on the station. */
@@ -1455,10 +1458,10 @@ CommandCost RemoveFromRailBaseStation(TileArea ta, SmallVector<T *, 4> &affected
 				if (v != NULL) {
 					/* Free train reservation. */
 					FreeTrainTrackReservation(v);
-					if (IsRailStationTile(v->tile)) SetRailStationPlatformReservation(v->tile, TrackdirToExitdir(v->GetVehicleTrackdir()), false);
-					Vehicle *temp = v;
-					for (; temp->Next() != NULL; temp = temp->Next()) { }
-					if (IsRailStationTile(temp->tile)) SetRailStationPlatformReservation(temp->tile, TrackdirToExitdir(ReverseTrackdir(temp->GetVehicleTrackdir())), false);
+					Train *moving_front = v->GetMovingFront();
+					Train *moving_back = v->GetMovingBack();
+					if (IsRailStationTile(moving_front->tile)) SetRailStationPlatformReservation(moving_front->tile, TrackdirToExitdir(moving_front->GetVehicleTrackdir()), false);
+					if (IsRailStationTile(moving_back->tile)) SetRailStationPlatformReservation(moving_back->tile, TrackdirToExitdir(ReverseTrackdir(moving_back->GetVehicleTrackdir())), false);
 				}
 			}
 
@@ -1481,10 +1484,11 @@ CommandCost RemoveFromRailBaseStation(TileArea ta, SmallVector<T *, 4> &affected
 
 			if (v != NULL) {
 				/* Restore station reservation. */
-				if (IsRailStationTile(v->tile)) SetRailStationPlatformReservation(v->tile, TrackdirToExitdir(v->GetVehicleTrackdir()), true);
+				Train *moving_front = v->GetMovingFront();
+				Train *moving_back = v->GetMovingBack();
+				if (IsRailStationTile(moving_front->tile)) SetRailStationPlatformReservation(moving_front->tile, TrackdirToExitdir(moving_front->GetVehicleTrackdir()), true);
 				TryPathReserve(v, true, true);
-				for (; v->Next() != NULL; v = v->Next()) { }
-				if (IsRailStationTile(v->tile)) SetRailStationPlatformReservation(v->tile, TrackdirToExitdir(ReverseTrackdir(v->GetVehicleTrackdir())), true);
+				if (IsRailStationTile(moving_back->tile)) SetRailStationPlatformReservation(moving_back->tile, TrackdirToExitdir(ReverseTrackdir(moving_back->GetVehicleTrackdir())), true);
 			}
 		}
 	}

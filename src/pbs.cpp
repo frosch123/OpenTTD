@@ -274,22 +274,24 @@ static Vehicle *FindTrainOnTrackEnum(Vehicle *v, void *data)
 /**
  * Follow a train reservation to the last tile.
  *
- * @param v the vehicle
+ * @param consist the vehicle
  * @param train_on_res Is set to a train we might encounter
  * @returns The last tile of the reservation or the current train tile if no reservation present.
  */
-PBSTileInfo FollowTrainReservation(const Train *v, Vehicle **train_on_res)
+PBSTileInfo FollowTrainReservation(const Train *consist, Vehicle **train_on_res)
 {
-	assert(v->type == VEH_TRAIN);
+	assert(consist->type == VEH_TRAIN);
 
-	TileIndex tile = v->tile;
-	Trackdir  trackdir = v->GetVehicleTrackdir();
+	const Train *moving_front = consist->GetMovingFront();
+
+	TileIndex tile = moving_front->tile;
+	Trackdir  trackdir = moving_front->GetVehicleTrackdir();
 
 	if (IsRailDepotTile(tile) && !GetDepotReservationTrackBits(tile)) return PBSTileInfo(tile, trackdir, false);
 
 	FindTrainOnTrackInfo ftoti;
-	ftoti.res = FollowReservation(v->owner, GetRailTypeInfo(v->railtype)->compatible_railtypes, tile, trackdir);
-	ftoti.res.okay = IsSafeWaitingPosition(v, ftoti.res.tile, ftoti.res.trackdir, true, _settings_game.pf.forbid_90_deg);
+	ftoti.res = FollowReservation(consist->owner, GetRailTypeInfo(consist->railtype)->compatible_railtypes, tile, trackdir);
+	ftoti.res.okay = IsSafeWaitingPosition(consist, ftoti.res.tile, ftoti.res.trackdir, true, _settings_game.pf.forbid_90_deg);
 	if (train_on_res != NULL) {
 		FindVehicleOnPos(ftoti.res.tile, &ftoti, FindTrainOnTrackEnum);
 		if (ftoti.best != NULL) *train_on_res = ftoti.best->First();

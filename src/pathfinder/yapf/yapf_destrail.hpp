@@ -149,7 +149,7 @@ public:
 				}
 				/* FALL THROUGH */
 			case OT_GOTO_STATION:
-				m_destTile = CalcClosestStationTile(v->current_order.GetDestination(), v->tile, v->current_order.IsType(OT_GOTO_STATION) ? STATION_RAIL : STATION_WAYPOINT);
+				m_destTile = CalcClosestStationTile(v->current_order.GetDestination(), v->GetMovingFront()->tile, v->current_order.IsType(OT_GOTO_STATION) ? STATION_RAIL : STATION_WAYPOINT);
 				m_dest_station_id = v->current_order.GetDestination();
 				m_destTrackdirs = INVALID_TRACKDIR_BIT;
 				break;

@@ -273,7 +273,7 @@ public:
 	 */
 	virtual void UpdateDeltaXY(Direction direction) {}
 
-	bool IsMovingFront() const { return this->IsFrontEngine(); }
+	bool IsMovingFront() const { return this->IsPrimaryVehicle(); }
 	Vehicle *GetMovingFront() const { return this->First(); }
 	Vehicle *GetMovingBack() const { return this->Last(); }
 	Vehicle *GetMovingNext() const { return this->Next(); }
