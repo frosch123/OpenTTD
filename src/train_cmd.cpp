@@ -293,7 +293,8 @@ int GetTrainStopLocation(StationID station_id, TileIndex tile, const Train *movi
 
 	/* Subtract half the front vehicle length of the train so we get the real
 	 * stop location of the train. */
-	return stop - (consist->gcache.cached_veh_length + 1) / 2;
+	uint8 rounding = consist->IsDrivingBackwards() ? 2 : 1;
+	return stop - (consist->gcache.cached_veh_length + rounding) / 2;
 }
 
 
@@ -1523,7 +1524,7 @@ static void SwapTrainFlags(uint16 *swap_flag1, uint16 *swap_flag2)
 static void UpdateStatusAfterSwap(Train *v)
 {
 	/* Reverse the direction. */
-	if (v->track != TRACK_BIT_DEPOT) v->direction = ReverseDir(v->direction);
+	v->direction = ReverseDir(v->direction);
 
 	/* Call the proper EnterTile function unless we are in a wormhole. */
 	if (v->track != TRACK_BIT_WORMHOLE) {
@@ -1792,6 +1793,14 @@ static void ReverseTrainDirection(Train *consist)
 	if (1) { // TODO
 		ToggleBit(consist->vehicle_flags, VF_DRIVING_BACKWARDS);
 		moving_front = consist->GetMovingFront();
+
+		for (Train *u = consist; u != NULL; u = u->Next()) {
+			/* Invert going up/down */
+			if (HasBit(u->gv_flags, GVF_GOINGUP_BIT) || HasBit(u->gv_flags, GVF_GOINGDOWN_BIT)) {
+				ToggleBit(u->gv_flags, GVF_GOINGDOWN_BIT);
+				ToggleBit(u->gv_flags, GVF_GOINGUP_BIT);
+			}
+		}
 	} else {
 		/* count number of vehicles */
 		int r = CountVehiclesInChain(consist) - 1;  // number of vehicles - 1
@@ -2089,7 +2098,7 @@ static void CheckNextTrainTile(Train *consist)
 				if (_settings_game.pf.forbid_90_deg) {
 					tracks &= ~TrackCrossesTracks(TrackdirToTrack(ft.m_old_td));
 				}
-				ChooseTrainTrack(consist, ft.m_new_tile, ft.m_exitdir, tracks, false, NULL, false); // TODO
+				ChooseTrainTrack(consist, ft.m_new_tile, ft.m_exitdir, tracks, false, NULL, false);
 			}
 		}
 	}
@@ -3116,7 +3125,7 @@ bool TrainController(Train *v, Vehicle *nomove, bool reverse)
 					}
 					if (HasBit(r, VETS_ENTERED_STATION)) {
 						/* The new position is the end of the platform */
-						TrainEnterStation(v, r >> VETS_STATION_ID_OFFSET);
+						TrainEnterStation(first, r >> VETS_STATION_ID_OFFSET);
 					}
 				}
 			} else {
@@ -3597,7 +3606,8 @@ static bool TrainApproachingLineEnd(Train *moving_front, bool signal, bool rever
 	 * location is based on their center, use half a vehicle's length as offset.
 	 * Multiply the half-length by two for straight directions to compensate that
 	 * we only get odd x offsets there. */
-	if (!signal && x + (moving_front->gcache.cached_veh_length + 1) / 2 * (IsDiagonalDirection(vdir) ? 1 : 2) >= TILE_SIZE) {
+	uint8 rounding = moving_front->IsDrivingBackwards() ? 0 : 1;
+	if (!signal && x + (moving_front->gcache.cached_veh_length + rounding) / 2 * (IsDiagonalDirection(vdir) ? 1 : 2) >= TILE_SIZE) {
 		/* we are too near the tile end, reverse now */
 		consist->cur_speed = 0;
 		if (reverse) ReverseTrainDirection(consist);

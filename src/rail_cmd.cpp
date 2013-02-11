@@ -2862,8 +2862,17 @@ static VehicleEnterTileStatus VehicleEnter_Track(Vehicle *u, TileIndex tile, int
 			/* enter the depot */
 			v->track = TRACK_BIT_DEPOT,
 			v->vehstatus |= VS_HIDDEN; // hide it
-			v->direction = ReverseDir(v->direction);
-			if (v->GetMovingNext() == NULL) VehicleEnterDepot(v->First());
+			if (v->GetMovingNext() == NULL) {
+				Train *consist = v->First();
+				if (HasBit(consist->vehicle_flags, VF_DRIVING_BACKWARDS)) {
+					ClrBit(consist->vehicle_flags, VF_DRIVING_BACKWARDS);
+				} else {
+					for (Train *u = consist; u != NULL; u = u->Next()) {
+						u->direction = ReverseDir(u->direction);
+					}
+				}
+				VehicleEnterDepot(consist);
+			}
 			v->tile = tile;
 
 			InvalidateWindowData(WC_VEHICLE_DEPOT, v->tile);

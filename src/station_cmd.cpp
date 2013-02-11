@@ -3095,8 +3095,9 @@ static VehicleEnterTileStatus VehicleEnter_Station(Vehicle *v, TileIndex tile, i
 {
 	if (v->type == VEH_TRAIN) {
 		StationID station_id = GetStationIndex(tile);
-		if (!v->current_order.ShouldStopAtStation(v, station_id)) return VETSB_CONTINUE;
 		if (!IsRailStation(tile) || !v->IsMovingFront()) return VETSB_CONTINUE;
+		Vehicle *consist = v->First();
+		if (!consist->current_order.ShouldStopAtStation(consist, station_id)) return VETSB_CONTINUE;
 
 		int station_ahead;
 		int station_length;
