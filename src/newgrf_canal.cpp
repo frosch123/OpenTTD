@@ -103,7 +103,7 @@ static void NewCanalResolver(ResolverObject *res, TileIndex tile, const GRFFile 
  */
 SpriteID GetCanalSprite(CanalFeature feature, TileIndex tile)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_CANALS, feature);
 	const SpriteGroup *group;
 
 	NewCanalResolver(&object, tile, _water_feature[feature].grffile);
@@ -125,7 +125,7 @@ SpriteID GetCanalSprite(CanalFeature feature, TileIndex tile)
  */
 static uint16 GetCanalCallback(CallbackID callback, uint32 param1, uint32 param2, CanalFeature feature, TileIndex tile)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_CANALS, feature);
 	const SpriteGroup *group;
 
 	NewCanalResolver(&object, tile, _water_feature[feature].grffile);

@@ -224,6 +224,7 @@ newgrf_house.h
 newgrf_industries.h
 newgrf_industrytiles.h
 newgrf_object.h
+newgrf_profiler.h
 newgrf_properties.h
 newgrf_railtype.h
 newgrf_sound.h
@@ -410,6 +411,7 @@ network/network_content_gui.cpp
 network/network_gui.cpp
 newgrf_debug_gui.cpp
 newgrf_gui.cpp
+newgrf_profiler_gui.cpp
 news_gui.cpp
 object_gui.cpp
 order_gui.cpp

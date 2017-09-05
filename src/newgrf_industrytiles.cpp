@@ -222,7 +222,7 @@ static void IndustryDrawTileLayout(const TileInfo *ti, const TileLayoutSpriteGro
 
 uint16 GetIndustryTileCallback(CallbackID callback, uint32 param1, uint32 param2, IndustryGfx gfx_id, Industry *industry, TileIndex tile)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_INDUSTRYTILES, gfx_id);
 	const SpriteGroup *group;
 
 	assert(industry != NULL && IsValidTile(tile));
@@ -242,7 +242,7 @@ uint16 GetIndustryTileCallback(CallbackID callback, uint32 param1, uint32 param2
 bool DrawNewIndustryTile(TileInfo *ti, Industry *i, IndustryGfx gfx, const IndustryTileSpec *inds)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_INDUSTRYTILES, gfx);
 
 	if (ti->tileh != SLOPE_FLAT) {
 		bool draw_old_one = true;
@@ -366,8 +366,6 @@ bool StartStopIndustryTileAnimation(const Industry *ind, IndustryAnimationTrigge
  */
 static void DoTriggerIndustryTile(TileIndex tile, IndustryTileTrigger trigger, Industry *ind, uint32 &reseed_industry)
 {
-	ResolverObject object;
-
 	assert(IsValidTile(tile) && IsTileType(tile, MP_INDUSTRY));
 
 	IndustryGfx gfx = GetIndustryGfx(tile);
@@ -375,6 +373,7 @@ static void DoTriggerIndustryTile(TileIndex tile, IndustryTileTrigger trigger, I
 
 	if (itspec->grf_prop.spritegroup[0] == NULL) return;
 
+	ResolverObject object(GSF_INDUSTRYTILES, gfx);
 	NewIndustryTileResolver(&object, gfx, tile, ind);
 
 	object.callback = CBID_RANDOM_TRIGGER;
@@ -383,14 +382,16 @@ static void DoTriggerIndustryTile(TileIndex tile, IndustryTileTrigger trigger, I
 	const SpriteGroup *group = SpriteGroup::Resolve(itspec->grf_prop.spritegroup[0], &object);
 	if (group == NULL) return;
 
+	reseed_industry |= object.reseed[VSG_SCOPE_PARENT];
+
+	if (object.reseed[VSG_SCOPE_SELF] == 0) return;
+
 	byte new_random_bits = Random();
 	byte random_bits = GetIndustryRandomBits(tile);
 	random_bits &= ~object.reseed[VSG_SCOPE_SELF];
 	random_bits |= new_random_bits & object.reseed[VSG_SCOPE_SELF];
 	SetIndustryRandomBits(tile, random_bits);
 	MarkTileDirtyByTile(tile);
-
-	reseed_industry |= object.reseed[VSG_SCOPE_PARENT];
 }
 
 /**

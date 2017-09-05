@@ -33,6 +33,11 @@ struct AirportTileSpec {
 
 	static void ResetAirportTiles();
 
+	StationGfx Index() const
+	{
+		return this - AirportTileSpec::tiles;
+	}
+
 private:
 	static AirportTileSpec tiles[NUM_AIRPORTTILES];
 

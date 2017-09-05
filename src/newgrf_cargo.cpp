@@ -75,7 +75,7 @@ static void NewCargoResolver(ResolverObject *res, const CargoSpec *cs)
 SpriteID GetCustomCargoSprite(const CargoSpec *cs)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_CARGOS, cs->Index());
 
 	NewCargoResolver(&object, cs);
 
@@ -88,7 +88,7 @@ SpriteID GetCustomCargoSprite(const CargoSpec *cs)
 
 uint16 GetCargoCallback(CallbackID callback, uint32 param1, uint32 param2, const CargoSpec *cs)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_CARGOS, cs->Index());
 	const SpriteGroup *group;
 
 	NewCargoResolver(&object, cs);

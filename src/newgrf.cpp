@@ -8903,6 +8903,7 @@ void LoadNewGRF(uint load_index, uint file_index)
 	InitializeGRFSpecial();
 
 	ResetNewGRFData();
+	NewGRFProfiler::Reset();
 
 	/*
 	 * Reset the status of all files, so we can 'retry' to load them.

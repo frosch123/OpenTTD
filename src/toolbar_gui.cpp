@@ -43,6 +43,7 @@
 #include "hotkeys.h"
 #include "engine_base.h"
 #include "settings_type.h"
+#include "newgrf_profiler.h"
 
 #include "network/network.h"
 #include "network/network_gui.h"
@@ -1005,7 +1006,7 @@ static CallBackFunction PlaceLandBlockInfo()
 
 static CallBackFunction ToolbarHelpClick(Window *w)
 {
-	PopupMainToolbMenu(w, TBN_HELP, STR_ABOUT_MENU_LAND_BLOCK_INFO, _settings_client.gui.newgrf_developer_tools ? 10 : 8);
+	PopupMainToolbMenu(w, TBN_HELP, STR_ABOUT_MENU_LAND_BLOCK_INFO, _settings_client.gui.newgrf_developer_tools ? 11 : 8);
 	return CBF_NONE;
 }
 
@@ -1058,6 +1059,7 @@ static CallBackFunction MenuClickHelp(int index)
 		case 7: ShowAboutWindow();             break;
 		case 8: ShowSpriteAlignerWindow();     break;
 		case 9: ToggleBoundingBoxes();         break;
+		case 10: ShowNewGRFProfilerWindow();   break;
 	}
 	return CBF_NONE;
 }

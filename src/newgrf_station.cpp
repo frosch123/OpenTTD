@@ -614,7 +614,7 @@ static const SpriteGroup *ResolveStation(ResolverObject *object)
 SpriteID GetCustomStationRelocation(const StationSpec *statspec, BaseStation *st, TileIndex tile, uint32 var10)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_STATIONS, statspec->grf_prop.local_id);
 
 	NewStationResolver(&object, statspec, st, tile);
 	object.callback_param1 = var10;
@@ -636,7 +636,7 @@ SpriteID GetCustomStationRelocation(const StationSpec *statspec, BaseStation *st
 SpriteID GetCustomStationFoundationRelocation(const StationSpec *statspec, BaseStation *st, TileIndex tile, uint layout, uint edge_info)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_STATIONS, statspec->grf_prop.local_id);
 
 	NewStationResolver(&object, statspec, st, tile);
 	object.callback_param1 = 2; // Indicate we are resolving the foundation sprites
@@ -652,7 +652,7 @@ SpriteID GetCustomStationFoundationRelocation(const StationSpec *statspec, BaseS
 uint16 GetStationCallback(CallbackID callback, uint32 param1, uint32 param2, const StationSpec *statspec, BaseStation *st, TileIndex tile)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_STATIONS, statspec->grf_prop.local_id);
 
 	NewStationResolver(&object, statspec, st, tile);
 
@@ -680,7 +680,7 @@ CommandCost PerformStationTileSlopeCheck(TileIndex north_tile, TileIndex cur_til
 	TileIndexDiff diff = cur_tile - north_tile;
 	Slope slope = GetTileSlope(cur_tile);
 
-	ResolverObject object;
+	ResolverObject object(GSF_STATIONS, statspec->grf_prop.local_id);
 	NewStationResolver(&object, statspec, NULL, cur_tile);
 
 	object.callback        = CBID_STATION_LAND_SLOPE_CHECK;

@@ -232,7 +232,7 @@ static void NewAirportResolver(ResolverObject *res, TileIndex tile, Station *st,
 SpriteID GetCustomAirportSprite(const AirportSpec *as, byte layout)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_AIRPORTS, as->GetIndex());
 
 	NewAirportResolver(&object, INVALID_TILE, NULL, as->GetIndex(), layout);
 
@@ -244,7 +244,7 @@ SpriteID GetCustomAirportSprite(const AirportSpec *as, byte layout)
 
 uint16 GetAirportCallback(CallbackID callback, uint32 param1, uint32 param2, Station *st, TileIndex tile)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_AIRPORTS, st->airport.type);
 
 	NewAirportResolver(&object, tile, st, st->airport.type, st->airport.layout);
 	object.callback = callback;
@@ -267,7 +267,7 @@ uint16 GetAirportCallback(CallbackID callback, uint32 param1, uint32 param2, Sta
 StringID GetAirportTextCallback(const AirportSpec *as, byte layout, uint16 callback)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_AIRPORTS, as->GetIndex());
 
 	NewAirportResolver(&object, INVALID_TILE, NULL, as->GetIndex(), layout);
 	object.callback = (CallbackID)callback;

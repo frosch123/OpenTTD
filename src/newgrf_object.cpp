@@ -417,7 +417,7 @@ static void NewObjectResolver(ResolverObject *res, const ObjectSpec *spec, Objec
  */
 uint16 GetObjectCallback(CallbackID callback, uint32 param1, uint32 param2, const ObjectSpec *spec, Object *o, TileIndex tile, uint8 view)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_OBJECTS, spec->Index());
 	NewObjectResolver(&object, spec, o, tile, view);
 	object.callback = callback;
 	object.callback_param1 = param1;
@@ -463,7 +463,7 @@ static void DrawTileLayout(const TileInfo *ti, const TileLayoutSpriteGroup *grou
  */
 void DrawNewObjectTile(TileInfo *ti, const ObjectSpec *spec)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_OBJECTS, spec->Index());
 	Object *o = Object::GetByTile(ti->tile);
 	NewObjectResolver(&object, spec, o, ti->tile);
 
@@ -482,7 +482,7 @@ void DrawNewObjectTile(TileInfo *ti, const ObjectSpec *spec)
  */
 void DrawNewObjectTileInGUI(int x, int y, const ObjectSpec *spec, uint8 view)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_OBJECTS, spec->Index());
 	NewObjectResolver(&object, spec, NULL, INVALID_TILE, view);
 
 	const SpriteGroup *group = SpriteGroup::Resolve(GetObjectSpriteGroup(spec, NULL), &object);

@@ -18,10 +18,13 @@
 #include "core/pool_type.hpp"
 #include "house_type.h"
 
+#include "newgrf.h"
 #include "newgrf_callbacks.h"
 #include "newgrf_generic.h"
 #include "newgrf_storage.h"
 #include "newgrf_commons.h"
+
+#include "newgrf_profiler.h"
 
 /**
  * Gets the value of a so-called newgrf "register".
@@ -71,7 +74,7 @@ struct SpriteGroup : SpriteGroupPool::PoolItem<&_spritegroup_pool> {
 protected:
 	SpriteGroup(SpriteGroupType type) : type(type) {}
 	/** Base sprite group resolver */
-	virtual const SpriteGroup *Resolve(struct ResolverObject *object) const { return this; };
+	virtual const SpriteGroup *Resolve(struct ResolverObject *object) const;
 
 public:
 	virtual ~SpriteGroup() {}
@@ -386,6 +389,25 @@ struct ResolverObject {
 	uint32 (*GetVariable)(const struct ResolverObject *object, byte variable, uint32 parameter, bool *available);
 	const SpriteGroup *(*ResolveReal)(const struct ResolverObject*, const RealSpriteGroup*);
 	void (*StorePSA)(struct ResolverObject*, uint, int32);
+
+	uint8 feature;
+	uint entity_id;
+	uint64 profile_start;
+	uint resolve_steps;
+
+	ResolverObject(uint8 feature, uint entity_id) : feature(feature), entity_id(entity_id), resolve_steps(0)
+	{
+		if (NewGRFProfiler::IsEnabled()) {
+			this->profile_start = ottd_rdtsc();
+		}
+	}
+
+	~ResolverObject()
+	{
+		if (this->resolve_steps > 0 && feature != GSF_INVALID && NewGRFProfiler::IsEnabled()) {
+			NewGRFProfiler::Record(grffile->grfid, feature, entity_id, this->callback, ottd_rdtsc() - this->profile_start);
+		}
+	}
 
 	/**
 	 * Returns the OR-sum of all bits that need reseeding

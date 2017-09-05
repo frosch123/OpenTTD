@@ -439,7 +439,7 @@ static void NewHouseResolver(ResolverObject *res, HouseID house_id, TileIndex ti
 
 uint16 GetHouseCallback(CallbackID callback, uint32 param1, uint32 param2, HouseID house_id, Town *town, TileIndex tile, bool not_yet_constructed, uint8 initial_random_bits, uint32 watched_cargo_triggers)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_HOUSES, house_id);
 	const SpriteGroup *group;
 
 	assert(IsValidTile(tile) && (not_yet_constructed || IsTileType(tile, MP_HOUSE)));
@@ -489,7 +489,7 @@ void DrawNewHouseTile(TileInfo *ti, HouseID house_id)
 {
 	const HouseSpec *hs = HouseSpec::Get(house_id);
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_HOUSES, house_id);
 
 	if (ti->tileh != SLOPE_FLAT) {
 		bool draw_old_one = true;
@@ -620,8 +620,6 @@ bool NewHouseTileLoop(TileIndex tile)
 
 static void DoTriggerHouse(TileIndex tile, HouseTrigger trigger, byte base_random, bool first)
 {
-	ResolverObject object;
-
 	/* We can't trigger a non-existent building... */
 	assert(IsTileType(tile, MP_HOUSE));
 
@@ -630,6 +628,7 @@ static void DoTriggerHouse(TileIndex tile, HouseTrigger trigger, byte base_rando
 
 	if (hs->grf_prop.spritegroup == NULL) return;
 
+	ResolverObject object(GSF_HOUSES, hid);
 	NewHouseResolver(&object, hid, tile, Town::GetByTile(tile));
 
 	object.callback = CBID_RANDOM_TRIGGER;

@@ -37,6 +37,7 @@
 #include "newgrf.h"
 #include "console_func.h"
 #include "engine_base.h"
+#include "newgrf_profiler.h"
 
 #ifdef ENABLE_NETWORK
 	#include "table/strings.h"
@@ -143,6 +144,14 @@ DEF_CONSOLE_HOOK(ConHookNewGRFDeveloperTool)
 #else
 		return CHR_ALLOW;
 #endif
+	}
+	return CHR_HIDE;
+}
+
+DEF_CONSOLE_HOOK(ConHookSafeNewGRFDeveloperTool)
+{
+	if (_settings_client.gui.newgrf_developer_tools) {
+		return CHR_ALLOW;
 	}
 	return CHR_HIDE;
 }
@@ -1830,6 +1839,28 @@ DEF_CONSOLE_CMD(ConNewGRFReload)
 	return true;
 }
 
+DEF_CONSOLE_CMD(ConNewGRFStartProfiler)
+{
+	if (argc == 0) {
+		IConsoleHelp("Starts profiling NewGRF sprite resolving.");
+		return true;
+	}
+
+	NewGRFProfiler::Start();
+	return true;
+}
+
+DEF_CONSOLE_CMD(ConNewGRFStopProfiler)
+{
+	if (argc == 0) {
+		IConsoleHelp("Stops profiling NewGRF sprite resolving.");
+		return true;
+	}
+
+	NewGRFProfiler::Stop();
+	return true;
+}
+
 #ifdef _DEBUG
 /******************
  *  debug commands
@@ -1973,4 +2004,6 @@ void IConsoleStdLibRegister()
 
 	/* NewGRF development stuff */
 	IConsoleCmdRegister("reload_newgrfs",  ConNewGRFReload, ConHookNewGRFDeveloperTool);
+	IConsoleCmdRegister("start_profiler",  ConNewGRFStartProfiler, ConHookSafeNewGRFDeveloperTool);
+	IConsoleCmdRegister("stop_profiler",   ConNewGRFStopProfiler,  ConHookSafeNewGRFDeveloperTool);
 }

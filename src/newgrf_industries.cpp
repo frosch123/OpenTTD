@@ -442,7 +442,7 @@ static void NewIndustryResolver(ResolverObject *res, TileIndex tile, Industry *i
  */
 uint16 GetIndustryCallback(CallbackID callback, uint32 param1, uint32 param2, Industry *industry, IndustryType type, TileIndex tile)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_INDUSTRIES, type);
 	const SpriteGroup *group;
 
 	NewIndustryResolver(&object, tile, industry, type);
@@ -519,7 +519,7 @@ CommandCost CheckIfCallBackAllowsCreation(TileIndex tile, IndustryType type, uin
 {
 	const IndustrySpec *indspec = GetIndustrySpec(type);
 
-	ResolverObject object;
+	ResolverObject object(GSF_INDUSTRIES, type);
 	const SpriteGroup *group;
 
 	Industry ind;
@@ -591,7 +591,7 @@ static int32 DerefIndProd(int field, bool use_register)
 void IndustryProductionCallback(Industry *ind, int reason)
 {
 	const IndustrySpec *spec = GetIndustrySpec(ind->type);
-	ResolverObject object;
+	ResolverObject object(GSF_INDUSTRIES, ind->type);
 	NewIndustryResolver(&object, ind->location.tile, ind, ind->type);
 	if ((spec->behaviour & INDUSTRYBEH_PRODCALLBACK_RANDOM) != 0) object.callback_param1 = Random();
 	int multiplier = 1;

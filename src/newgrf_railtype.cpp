@@ -101,7 +101,7 @@ SpriteID GetCustomRailSprite(const RailtypeInfo *rti, TileIndex tile, RailTypeSp
 	if (rti->group[rtsg] == NULL) return 0;
 
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_RAILTYPES, rti->Index());
 
 	NewRailTypeResolver(&object, tile, context, rti->grffile[rtsg]);
 

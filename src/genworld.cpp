@@ -32,6 +32,7 @@
 #include "core/random_func.hpp"
 #include "core/backup_type.hpp"
 #include "progress.h"
+#include "newgrf_profiler.h"
 
 #include "table/sprites.h"
 
@@ -174,6 +175,7 @@ static void _GenerateWorld(void *)
 		CleanupGeneration();
 		_modal_progress_work_mutex->EndCritical();
 
+		if (NewGRFProfiler::IsEnabled()) ShowNewGRFProfilerWindow();
 		ShowNewGRFError();
 
 		if (_network_dedicated) DEBUG(net, 0, "Map generated, starting game");

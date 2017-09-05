@@ -18,6 +18,12 @@
 SpriteGroupPool _spritegroup_pool("SpriteGroup");
 INSTANTIATE_POOL_METHODS(SpriteGroup)
 
+const SpriteGroup *SpriteGroup::Resolve(struct ResolverObject *object) const
+{
+	object->resolve_steps++;
+	return this;
+};
+
 RealSpriteGroup::~RealSpriteGroup()
 {
 	free((void*)this->loaded);
@@ -131,6 +137,7 @@ const SpriteGroup *DeterministicSpriteGroup::Resolve(ResolverObject *object) con
 	uint32 value = 0;
 	uint i;
 
+	object->resolve_steps++;
 	object->scope = this->var_scope;
 
 	for (i = 0; i < this->num_adjusts; i++) {
@@ -195,6 +202,7 @@ const SpriteGroup *RandomizedSpriteGroup::Resolve(ResolverObject *object) const
 	uint32 mask;
 	byte index;
 
+	object->resolve_steps++;
 	object->scope = this->var_scope;
 	object->count = this->count;
 
@@ -224,6 +232,7 @@ const SpriteGroup *RandomizedSpriteGroup::Resolve(ResolverObject *object) const
 
 const SpriteGroup *RealSpriteGroup::Resolve(ResolverObject *object) const
 {
+	object->resolve_steps++;
 	return object->ResolveReal(object, this);
 }
 

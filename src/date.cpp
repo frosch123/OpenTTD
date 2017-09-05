@@ -19,6 +19,7 @@
 #include "vehicle_base.h"
 #include "rail_gui.h"
 #include "saveload/saveload.h"
+#include "newgrf_profiler.h"
 
 Year      _cur_year;   ///< Current year, starting at 0
 Month     _cur_month;  ///< Current month (0..11)
@@ -241,6 +242,8 @@ static void OnNewMonth()
 #ifdef ENABLE_NETWORK
 	if (_network_server) NetworkServerMonthlyLoop();
 #endif /* ENABLE_NETWORK */
+
+	NewGRFProfiler::OnNewMonth();
 }
 
 /**

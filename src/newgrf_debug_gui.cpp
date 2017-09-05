@@ -157,7 +157,9 @@ public:
 	 */
 	virtual uint Resolve(uint index, uint var, uint param, bool *avail) const
 	{
-		ResolverObject ro;
+		/* We do not know exactly what stuff we are resolving. But we do not want to profile this
+		 * anyway. */
+		ResolverObject ro(GSF_INVALID, 0);
 		memset(&ro, 0, sizeof(ro));
 		this->Resolve(&ro, index);
 		return ro.GetVariable(&ro, var, param, avail);

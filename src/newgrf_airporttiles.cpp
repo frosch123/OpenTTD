@@ -246,7 +246,7 @@ static void AirportTileResolver(ResolverObject *res, const AirportTileSpec *ats,
 
 uint16 GetAirportTileCallback(CallbackID callback, uint32 param1, uint32 param2, const AirportTileSpec *ats, Station *st, TileIndex tile, int extra_data = 0)
 {
-	ResolverObject object;
+	ResolverObject object(GSF_AIRPORTTILES, ats->Index());
 	const SpriteGroup *group;
 
 	AirportTileResolver(&object, ats, tile, st);
@@ -281,7 +281,7 @@ static void AirportDrawTileLayout(const TileInfo *ti, const TileLayoutSpriteGrou
 bool DrawNewAirportTile(TileInfo *ti, Station *st, StationGfx gfx, const AirportTileSpec *airts)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_AIRPORTTILES, airts->Index());
 
 	if (ti->tileh != SLOPE_FLAT) {
 		bool draw_old_one = true;

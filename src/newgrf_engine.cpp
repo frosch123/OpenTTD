@@ -970,7 +970,7 @@ static const SpriteGroup *GetVehicleSpriteGroup(EngineID engine, const Vehicle *
 SpriteID GetCustomEngineSprite(EngineID engine, const Vehicle *v, Direction direction, EngineImageType image_type)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_TRAINS + Engine::Get(engine)->type - VEH_TRAIN, engine);
 
 	NewVehicleResolver(&object, engine, v);
 
@@ -991,7 +991,7 @@ SpriteID GetRotorOverrideSprite(EngineID engine, const Aircraft *v, bool info_vi
 	assert(e->type == VEH_AIRCRAFT);
 	assert(!(e->u.air.subtype & AIR_CTOL));
 
-	ResolverObject object;
+	ResolverObject object(GSF_AIRCRAFT, engine);
 
 	NewVehicleResolver(&object, engine, v);
 
@@ -1032,7 +1032,7 @@ bool UsesWagonOverride(const Vehicle *v)
 uint16 GetVehicleCallback(CallbackID callback, uint32 param1, uint32 param2, EngineID engine, const Vehicle *v)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_TRAINS + Engine::Get(engine)->type - VEH_TRAIN, engine);
 
 	NewVehicleResolver(&object, engine, v);
 
@@ -1059,7 +1059,7 @@ uint16 GetVehicleCallback(CallbackID callback, uint32 param1, uint32 param2, Eng
 uint16 GetVehicleCallbackParent(CallbackID callback, uint32 param1, uint32 param2, EngineID engine, const Vehicle *v, const Vehicle *parent)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_TRAINS + Engine::Get(engine)->type - VEH_TRAIN, engine);
 
 	NewVehicleResolver(&object, engine, v);
 
@@ -1095,7 +1095,7 @@ uint GetEngineProperty(EngineID engine, PropertyID property, uint orig_value, co
 static void DoTriggerVehicle(Vehicle *v, VehicleTrigger trigger, byte base_random_bits, bool first)
 {
 	const SpriteGroup *group;
-	ResolverObject object;
+	ResolverObject object(GSF_TRAINS + v->type - VEH_TRAIN, v->engine_type);
 	byte new_random_bits;
 
 	/* We can't trigger a non-existent vehicle... */
@@ -1263,7 +1263,7 @@ void GetVehicleResolver(ResolverObject *ro, uint index)
  */
 void FillNewGRFVehicleCache(const Vehicle *v)
 {
-	ResolverObject ro;
+	ResolverObject ro(GSF_TRAINS + v->type - VEH_TRAIN, v->engine_type);
 	memset(&ro, 0, sizeof(ro));
 	GetVehicleResolver(&ro, v->index);
 

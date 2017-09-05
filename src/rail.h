@@ -259,6 +259,12 @@ struct RailtypeInfo {
 	{
 		return 82 * this->fallback_railtype;
 	}
+
+	uint Index() const
+	{
+		extern RailtypeInfo _railtypes[RAILTYPE_END];
+		return this - _railtypes;
+	}
 };
 
 

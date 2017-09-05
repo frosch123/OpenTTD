@@ -450,6 +450,7 @@ STR_ABOUT_MENU_GIANT_SCREENSHOT                                 :Whole map scree
 STR_ABOUT_MENU_ABOUT_OPENTTD                                    :About 'OpenTTD'
 STR_ABOUT_MENU_SPRITE_ALIGNER                                   :Sprite aligner
 STR_ABOUT_MENU_TOGGLE_BOUNDING_BOXES                            :Toggle bounding boxes
+STR_ABOUT_MENU_NEWGRF_PROFILER                                  :Show NewGRF profiler
 ############ range ends here
 
 ############ range for days starts (also used for the place in the highscore window)
@@ -2465,6 +2466,17 @@ STR_SPRITE_ALIGNER_PICKER_BUTTON                                :{BLACK}Pick spr
 STR_SPRITE_ALIGNER_PICKER_TOOLTIP                               :{BLACK}Pick a sprite from anywhere on the screen
 
 STR_SPRITE_ALIGNER_GOTO_CAPTION                                 :{WHITE}Go to sprite
+
+# NewGRF profiler window
+STR_NEWGRF_PROFILER_CAPTION                                     :{WHITE}NewGRF profiler
+STR_NEWGRF_PROFILER_START                                       :{BLACK}Start profiling
+STR_NEWGRF_PROFILER_STOP                                        :{BLACK}Stop profiling
+STR_NEWGRF_PROFILER_STARTSTOP_TOOLTIP                           :{BLACK}Start/stop profiling
+STR_NEWGRF_PROFILER_MAPGEN                                      :{BLACK}Map gen.
+STR_NEWGRF_PROFILER_ALL_MONTHS                                  :{BLACK}12 months
+STR_NEWGRF_PROFILER_NORMAL                                      :{BLACK}Normal
+STR_NEWGRF_PROFILER_TRIGGER                                     :{BLACK}Randomisation
+STR_NEWGRF_PROFILER_CALLBACK                                    :{BLACK}Callback {HEX}
 
 # NewGRF (self) generated warnings/errors
 STR_NEWGRF_ERROR_MSG_INFO                                       :{SILVER}{RAW_STRING}

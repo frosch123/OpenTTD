@@ -195,7 +195,7 @@ static uint16 GetGenericCallbackResult(uint8 feature, ResolverObject *object, ui
  */
 uint16 GetAiPurchaseCallbackResult(uint8 feature, CargoID cargo_type, uint8 default_selection, IndustryType src_industry, IndustryType dst_industry, uint8 distance, AIConstructionEvent event, uint8 count, uint8 station_size, const GRFFile **file)
 {
-	ResolverObject object;
+	ResolverObject object((GrfSpecFeature)feature, 0);
 
 	NewGenericResolver(&object, true);
 
@@ -241,7 +241,7 @@ void AmbientSoundEffectCallback(TileIndex tile)
 	uint32 r; // Save for later
 	if (!Chance16R(1, 200, r)) return;
 
-	ResolverObject object;
+	ResolverObject object(GSF_SOUNDFX, 0);
 
 	/* Prepare resolver object. */
 	NewGenericResolver(&object, false);
