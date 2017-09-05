@@ -10,6 +10,7 @@
 /** @file group_cmd.cpp Handling of the engine groups */
 
 #include "stdafx.h"
+#include "debug.h"
 #include "cmd_helper.h"
 #include "command_func.h"
 #include "train.h"
@@ -39,6 +40,17 @@ GroupStatistics::GroupStatistics()
 GroupStatistics::~GroupStatistics()
 {
 	free(this->num_engines);
+}
+
+GroupStatistics &GroupStatistics::operator=(const GroupStatistics &other)
+{
+	this->num_vehicle = other.num_vehicle;
+	MemCpyT(this->num_engines, other.num_engines, Engine::GetPoolSize());
+	this->autoreplace_defined = other.autoreplace_defined;
+	this->autoreplace_finished = other.autoreplace_finished;
+	this->num_profit_vehicle = other.num_profit_vehicle;
+	this->profit_last_year = other.profit_last_year;
+	return *this;
 }
 
 /**
@@ -128,6 +140,91 @@ void GroupStatistics::Clear()
 	FOR_ALL_COMPANIES(c) {
 		GroupStatistics::UpdateAutoreplace(c->index);
 	}
+}
+
+/**
+ * Compare group statistics and print differences to DEBUG output.
+ */
+bool GroupStatistics::Compare(const GroupStatistics &other, const char *debug_message) const
+{
+	bool mismatch = false;
+	if (this->num_vehicle != other.num_vehicle) {
+		DEBUG(desync, 0, "%s: num_vehicle mismatch: %d != %d", debug_message, this->num_vehicle, other.num_vehicle);
+		mismatch = true;
+	}
+	for (uint i = 0; i < Engine::GetPoolSize(); i++) {
+		if (this->num_engines[i] != other.num_engines[i]) {
+			DEBUG(desync, 0, "%s: num_engines[%d] mismatch: %d != %d", debug_message, i, this->num_engines[i], other.num_engines[i]);
+			mismatch = true;
+		}
+	}
+	if (this->autoreplace_defined != other.autoreplace_defined) {
+		DEBUG(desync, 0, "%s: autoreplace_defined mismatch: %d != %d", debug_message, this->autoreplace_defined, other.autoreplace_defined);
+		mismatch = true;
+	}
+	if (this->autoreplace_finished != other.autoreplace_finished) {
+		DEBUG(desync, 0, "%s: autoreplace_finished mismatch: %d != %d", debug_message, this->autoreplace_finished, other.autoreplace_finished);
+		mismatch = true;
+	}
+	if (this->num_profit_vehicle != other.num_profit_vehicle) {
+		DEBUG(desync, 0, "%s: num_profit_vehicle mismatch: %d != %d", debug_message, this->num_profit_vehicle, other.num_profit_vehicle);
+		mismatch = true;
+	}
+	if (this->profit_last_year != other.profit_last_year) {
+		DEBUG(desync, 0, "%s: profit_last_year mismatch: " OTTD_PRINTF64 " != " OTTD_PRINTF64, debug_message, (int64)this->profit_last_year, (int64)other.profit_last_year);
+		mismatch = true;
+	}
+	return mismatch;
+}
+
+/**
+ * Check group statistics, and assert if they are off.
+ */
+/* static */ void GroupStatistics::CheckCaches()
+{
+	GroupStatistics all_group[MAX_COMPANIES][VEH_COMPANY_END];
+	GroupStatistics def_group[MAX_COMPANIES][VEH_COMPANY_END];
+	GroupStatistics *groups = new GroupStatistics[Group::GetNumItems()];
+
+	Company *c;
+	FOR_ALL_COMPANIES(c) {
+		for (VehicleType type = VEH_BEGIN; type < VEH_COMPANY_END; type++) {
+			all_group[c->index][type] = c->group_all[type];
+			def_group[c->index][type] = c->group_default[type];
+		}
+	}
+
+	Group *g;
+	uint i = 0;
+	FOR_ALL_GROUPS(g) {
+		groups[i++] = g->statistics;
+	}
+
+	UpdateAfterLoad();
+
+	bool mismatch = false;
+
+	FOR_ALL_COMPANIES(c) {
+		for (VehicleType type = VEH_BEGIN; type < VEH_COMPANY_END; type++) {
+			char buf[32];
+			seprintf(buf, lastof(buf), "ALL %d %d", (int)c->index, type);
+			mismatch |= c->group_all[type].Compare(all_group[c->index][type], buf);
+			seprintf(buf, lastof(buf), "DEF %d %d", (int)c->index, type);
+			mismatch |= c->group_default[type].Compare(def_group[c->index][type], buf);
+		}
+	}
+
+	i = 0;
+	FOR_ALL_GROUPS(g) {
+		char buf[32];
+		seprintf(buf, lastof(buf), "GRP %d", g->index);
+		mismatch |= g->statistics.Compare(groups[i++], buf);
+	}
+
+	/* Temporarily check this using an assertion */
+	assert(!mismatch);
+
+	delete[] groups;
 }
 
 /**

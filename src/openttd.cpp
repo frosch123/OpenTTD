@@ -1189,6 +1189,9 @@ void SwitchToMode(SwitchMode new_mode)
  */
 static void CheckCaches()
 {
+	/* Temporarily always active */
+	GroupStatistics::CheckCaches();
+
 	/* Return here so it is easy to add checks that are run
 	 * always to aid testing of caches. */
 	if (_debug_desync_level <= 1) return;

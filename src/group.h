@@ -35,6 +35,9 @@ struct GroupStatistics {
 	GroupStatistics();
 	~GroupStatistics();
 
+	GroupStatistics &operator=(const GroupStatistics &other);
+	bool Compare(const GroupStatistics &other, const char *debug_message) const;
+
 	void Clear();
 
 	void ClearProfits()
@@ -60,6 +63,8 @@ struct GroupStatistics {
 	static void UpdateProfits();
 	static void UpdateAfterLoad();
 	static void UpdateAutoreplace(CompanyID company);
+
+	static void CheckCaches();
 };
 
 /** Group data. */
