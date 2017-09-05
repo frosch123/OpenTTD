@@ -93,6 +93,7 @@ enum StringControlCode {
 	SCC_ARG_INDEX,
 	SCC_SET_CASE,
 	SCC_SWITCH_CASE,
+	SCC_TRUNCATE,
 
 	/* Colour codes */
 	SCC_BLUE,

@@ -72,6 +72,7 @@ class Font ICU_FONTINSTANCE {
 public:
 	FontCache *fc;     ///< The font we are using.
 	TextColour colour; ///< The colour this font has to be.
+	uint textsegment;  ///< Index of the text segment the font is used by.
 
 	Font(FontSize size, TextColour colour);
 
@@ -158,12 +159,24 @@ public:
 };
 #endif /* !WITH_ICU */
 
+/** Properties associated to a segment of a text line. */
+struct TextLineSegment {
+	uint truncation_priority;
+};
+typedef SmallVector<TextLineSegment, 1> TextLineSegmentVector;
+
+/** A line of text. */
+struct TextLine {
+	ParagraphLayout::Line *line;
+	const TextLineSegmentVector *segments;
+};
+
 /**
  * The layouter performs all the layout work.
  *
  * It also accounts for the memory allocations and frees.
  */
-class Layouter : public AutoDeleteSmallVector<ParagraphLayout::Line *, 4> {
+class Layouter : public SmallVector<TextLine, 4> {
 #ifdef WITH_ICU
 	typedef UChar CharType; ///< The type of character used within the layouter.
 #else /* WITH_ICU */
@@ -198,6 +211,8 @@ class Layouter : public AutoDeleteSmallVector<ParagraphLayout::Line *, 4> {
 		FontState state_after;   ///< Font state after the line.
 		ParagraphLayout *layout; ///< Layout of the line.
 
+		TextLineSegmentVector segments;
+
 		LineCacheItem() : layout(NULL) {}
 		~LineCacheItem() { delete layout; }
 	};
@@ -206,12 +221,13 @@ class Layouter : public AutoDeleteSmallVector<ParagraphLayout::Line *, 4> {
 
 	static LineCacheItem &GetCachedParagraphLayout(const char *str, size_t len, const FontState &state);
 
-	typedef SmallMap<TextColour, Font *> FontColourMap;
+	typedef SmallMap<uint, Font *> FontColourMap;
 	static FontColourMap fonts[FS_END];
-	static Font *GetFont(FontSize size, TextColour colour);
+	static Font *GetFont(FontSize size, TextColour colour, uint textsegment);
 
 public:
 	Layouter(const char *str, int maxw = INT32_MAX, TextColour colour = TC_FROMSTRING, FontSize fontsize = FS_NORMAL);
+	~Layouter();
 	Dimension GetBounds();
 	Point GetCharPosition(const char *ch) const;
 	const char *GetCharAtPosition(int x) const;
