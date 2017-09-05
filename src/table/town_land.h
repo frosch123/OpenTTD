@@ -1801,476 +1801,474 @@ assert_compile(lengthof(_town_draw_tile_data) == (NEW_HOUSE_OFFSET) * 4 * 4);
  * @param bn  building name
  * @param rr  rating decrease if removed
  * @param mg  mail generation multiplier
- * @param ca1 acceptance for 1st CargoID
- * @param ca2 acceptance for 2nd CargoID
- * @param ca3 acceptance for 3rd CargoID
+ * @param ca1 acceptance for passenger
+ * @param ca2 acceptance for mail
+ * @param ca3 acceptance for goods/candy (positive) or food/fizzy drinks (negative)
  * @param bf  building flags (size, stadium etc...)
  * @param ba  building availability (zone, climate...)
- * @param cg1 1st CargoID available
- * @param cg2 2nd CargoID available
- * @param cg3 3rd CargoID available
  * @see HouseSpec
  */
-#define MS(mnd, mxd, p, rc, bn, rr, mg, ca1, ca2, ca3, bf, ba, cg1, cg2, cg3) \
-	{mnd, mxd, p, rc, bn, rr, mg, {ca1, ca2, ca3}, {cg1, cg2, cg3}, bf, ba, true, \
+#define MS(mnd, mxd, p, rc, bn, rr, mg, ca1, ca2, ca3, bf, ba) \
+	{mnd, mxd, p, rc, bn, rr, mg, {ca1, ca2, ca3}, {CT_PASSENGERS, CT_MAIL, CT_GOODS}, bf, ba, true, \
 	 GRFFileProps(INVALID_HOUSE_ID), 0, {0, 0, 0, 0}, 16, NO_EXTRA_FLAG, HOUSE_NO_CLASS, {0, 2, 0, 0}, 0, 0, 0}
+assert_compile(CT_GOODS == CT_CANDY);
+assert_compile(CT_FOOD == CT_FIZZY_DRINKS);
 /** House specifications from original data */
 static const HouseSpec _original_house_specs[] = {
 	/**
 	 *                                                                              remove_rating_decrease
 	 *                                                                              |    mail_generation
-	 *     min_year                                                                 |    |    1st CargoID acceptance
-	 *     |         max_year                                                       |    |    |    2nd CargoID acceptance
-	 *     |         |    population                                                |    |    |    |    3th CargoID acceptance
+	 *     min_year                                                                 |    |    acceptance for passenger
+	 *     |         max_year                                                       |    |    |    acceptance for mail
+	 *     |         |    population                                                |    |    |    |    acceptance goods/candy/food/fizzy drinks
 	 *     |         |    |    removal_cost                                         |    |    |    |    |
 	 *     |         |    |    |    building_name                                   |    |    |    |    |
 	 *     |         |    |    |    |                                               |    |    |    |    |
 	 *     |         |    |    |    |                                               |    |    |    |    |
 	 * +-building_flags   |    |    |                                               |    |    |    |    |
 	 * +-building_availability |    |                                               |    |    |    |    |
-	 * +-cargoID accepted |    |    |                                               |    |    |    |    |
 	 * |   |         |    |    |    |                                               |    |    |    |    |
 	 */
 	MS(1963, MAX_YEAR, 187, 150, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      140,  70,   8,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 00
+	   HZ_TEMP | HZ_ZON5
+	), // 00
 	MS(1957, MAX_YEAR,  85, 140, STR_TOWN_BUILDING_NAME_OFFICE_BLOCK_1,           130,  55,   8,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 01
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4
+	), // 01
 	MS(1968, MAX_YEAR,  40, 100, STR_TOWN_BUILDING_NAME_SMALL_BLOCK_OF_FLATS_1,    90,  20,   8,   3,   1,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 02
+	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 02
 	MS(   0, MAX_YEAR,   5,  90, STR_TOWN_BUILDING_NAME_CHURCH_1,                 230,   2,   2,   0,   0,
 	   BUILDING_IS_CHURCH | TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 03
+	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 03
 	MS(1975, MAX_YEAR, 220, 160, STR_TOWN_BUILDING_NAME_LARGE_OFFICE_BLOCK_1,     160,  85,  10,   4,   6,
 	   BUILDING_IS_ANIMATED | TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 04
+	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5
+	), // 04
 	MS(1975, MAX_YEAR, 220, 160, STR_TOWN_BUILDING_NAME_LARGE_OFFICE_BLOCK_1,     160,  85,  10,   4,   6,
 	   BUILDING_IS_ANIMATED | TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE  | HZ_ZON5,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 05
+	   HZ_SUBARTC_ABOVE  | HZ_ZON5
+	), // 05
 	MS(   0, MAX_YEAR,  30,  80, STR_TOWN_BUILDING_NAME_TOWN_HOUSES_1,             80,  12,   4,   1,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 06
+	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 06
 	MS(1959, MAX_YEAR, 140, 180, STR_TOWN_BUILDING_NAME_HOTEL_1,                  150,  22,   6,   1,   2,
 	   TILE_SIZE_1x2,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 07
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON3
+	), // 07
 	MS(1959, MAX_YEAR,   0, 180, STR_TOWN_BUILDING_NAME_HOTEL_1,                  150,  22,   6,   1,   2,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 08
+	   HZ_NOZNS
+	), // 08
 	MS(1945, MAX_YEAR,   0,  65, STR_TOWN_BUILDING_NAME_STATUE_1,                  40,   0,   2,   0,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 09
+	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4
+	), // 09
 	MS(1945, MAX_YEAR,   0,  65, STR_TOWN_BUILDING_NAME_FOUNTAIN_1,                40,   0,   2,   0,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 0A
+	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5
+	), // 0A
 	MS(   0, MAX_YEAR,   0,  60, STR_TOWN_BUILDING_NAME_PARK_1,                    75,   0,   2,   0,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 0B
+	   HZ_TEMP | HZ_ZON3
+	), // 0B
 	MS(1935, MAX_YEAR,   0,  60, STR_TOWN_BUILDING_NAME_PARK_1,                    75,   0,   2,   0,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 0C
+	   HZ_TEMP | HZ_ZON4
+	), // 0C
 	MS(1951, MAX_YEAR, 150, 130, STR_TOWN_BUILDING_NAME_OFFICE_BLOCK_2,           110,  65,   8,   2,   4,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 0D
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4
+	), // 0D
 	MS(1930, 1960,      95, 110, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      100,  48,   6,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 0E
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 0E
 	MS(1930, 1960,      95, 105, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      100,  48,   6,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 0F
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 0F
 	MS(1930, 1960,      95, 107, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      100,  48,   6,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 10
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 10
 	MS(1977, MAX_YEAR, 130, 200, STR_TOWN_BUILDING_NAME_MODERN_OFFICE_BUILDING_1, 150,  50,  10,   3,   6,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 11
+	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5
+	), // 11
 	MS(1983, MAX_YEAR,   6, 145, STR_TOWN_BUILDING_NAME_WAREHOUSE_1,              110,  10,   6,   3,   8,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 12
+	   HZ_TEMP | HZ_ZON5
+	), // 12
 	MS(1985, MAX_YEAR, 110, 155, STR_TOWN_BUILDING_NAME_OFFICE_BLOCK_3,           110,  55,   6,   2,   6,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 13
+	   HZ_TEMP | HZ_ZON5
+	), // 13
 	MS(   0, MAX_YEAR,  65, 250, STR_TOWN_BUILDING_NAME_STADIUM_1,                300,   5,   4,   0,   0,
 	   BUILDING_IS_STADIUM | TILE_SIZE_2x2,
-	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 14
+	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 14
 	MS(   0, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_STADIUM_1,                300,   5,   4,   0,   0,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 15
+	   HZ_NOZNS
+	), // 15
 	MS(   0, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_STADIUM_1,                300,   5,   4,   0,   0,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 16
+	   HZ_NOZNS
+	), // 16
 	MS(   0, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_STADIUM_1,                300,   5,   4,   0,   0,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 17
+	   HZ_NOZNS
+	), // 17
 	MS(   0, 1951,      15,  70, STR_TOWN_BUILDING_NAME_OLD_HOUSES_1,              75,   6,   3,   1,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 18
+	   HZ_TEMP | HZ_ZON2 | HZ_ZON1
+	), // 18
 	MS(   0, 1952,      12,  75, STR_TOWN_BUILDING_NAME_COTTAGES_1,                75,   7,   3,   1,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 19
+	   HZ_TEMP | HZ_ZON1
+	), // 19
 	MS(1931, MAX_YEAR,  13,  71, STR_TOWN_BUILDING_NAME_HOUSES_1,                  75,   8,   3,   1,   0,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 1A
+	   HZ_TEMP | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 1A
 	MS(1935, MAX_YEAR, 100, 135, STR_TOWN_BUILDING_NAME_FLATS_1,                  100,  35,   7,   2,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 1B
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 1B
 	MS(1963, MAX_YEAR, 170, 145, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_2,      170,  50,   8,   3,   3,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 1C
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 1C
 	MS(   0, 1955,     100, 132, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_2,      135,  40,   6,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 1D
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 1D
 	MS(1973, MAX_YEAR, 180, 155, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_3,      180,  64,   8,   3,   3,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 1E
+	   HZ_TEMP | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON3
+	), // 1E
 	MS(   0, MAX_YEAR,  35, 220, STR_TOWN_BUILDING_NAME_THEATER_1,                230,  23,   8,   2,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 1F
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4
+	), // 1F
 	MS(1958, MAX_YEAR,  65, 250, STR_TOWN_BUILDING_NAME_STADIUM_2,                300,   5,   4,   0,   0,
 	   BUILDING_IS_STADIUM | TILE_SIZE_2x2,
-	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 20
+	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 20
 	MS(1958, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_STADIUM_2,                300,   5,   4,   0,   0,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 21
+	   HZ_NOZNS
+	), // 21
 	MS(1958, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_STADIUM_2,                300,   5,   4,   0,   0,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 22
+	   HZ_NOZNS
+	), // 22
 	MS(1958, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_STADIUM_2,                300,   5,   4,   0,   0,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 23
+	   HZ_NOZNS
+	), // 23
 	MS(2000, MAX_YEAR, 140, 170, STR_TOWN_BUILDING_NAME_OFFICES_1,                250,  65,   8,   3,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 24
-	MS(   0, 1960,      15,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,   1,
+	   HZ_TEMP | HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4
+	), // 24
+	MS(   0, 1960,      15,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 25
-	MS(   0, 1960,      15,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,   1,
+	   HZ_SUBARTC_BELOW | HZ_ZON2 | HZ_ZON1
+	), // 25
+	MS(   0, 1960,      15,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 26
+	   HZ_SUBARTC_ABOVE | HZ_ZON2 | HZ_ZON1
+	), // 26
 	MS(1945, MAX_YEAR,  35, 210, STR_TOWN_BUILDING_NAME_CINEMA_1,                 230,  23,   8,   2,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 27
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 27
 	MS(1983, MAX_YEAR, 180, 250, STR_TOWN_BUILDING_NAME_SHOPPING_MALL_1,          300,   5,   8,   2,   3,
 	   TILE_SIZE_2x2,
-	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 |HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 28
+	   HZ_TEMP | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 |HZ_ZON2
+	), // 28
 	MS(1983, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_SHOPPING_MALL_1,          300,   5,   8,   2,   3,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 29
+	   HZ_NOZNS
+	), // 29
 	MS(1983, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_SHOPPING_MALL_1,          300,   5,   8,   2,   3,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 2A
+	   HZ_NOZNS
+	), // 2A
 	MS(1983, MAX_YEAR,   0, 250, STR_TOWN_BUILDING_NAME_SHOPPING_MALL_1,          300,   5,   8,   2,   3,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 2B
-	MS(   0, MAX_YEAR,  80, 100, STR_TOWN_BUILDING_NAME_FLATS_1,                   90,  20,   5,   2,   2,
+	   HZ_NOZNS
+	), // 2B
+	MS(   0, MAX_YEAR,  80, 100, STR_TOWN_BUILDING_NAME_FLATS_1,                   90,  20,   5,   2,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 2C
-	MS(   0, MAX_YEAR,  80, 100, STR_TOWN_BUILDING_NAME_FLATS_1,                   90,  20,   5,   2,   2,
+	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 2C
+	MS(   0, MAX_YEAR,  80, 100, STR_TOWN_BUILDING_NAME_FLATS_1,                   90,  20,   5,   2,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE  | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 2D
-	MS(   0, MAX_YEAR,  16,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,   2,
+	   HZ_SUBARTC_ABOVE  | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 2D
+	MS(   0, MAX_YEAR,  16,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 2E
-	MS(   0, MAX_YEAR,  16,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,   2,
+	   HZ_SUBARTC_BELOW | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 2E
+	MS(   0, MAX_YEAR,  16,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 2F
-	MS(   0, 1963,      14,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,   2,
+	   HZ_SUBARTC_ABOVE | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 2F
+	MS(   0, 1963,      14,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 30
-	MS(   0, 1963,      14,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,   2,
+	   HZ_SUBARTC_BELOW | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 30
+	MS(   0, 1963,      14,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  70,   6,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 31
+	   HZ_SUBARTC_ABOVE | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 31
 	MS(1966, MAX_YEAR, 135, 150, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      120,  60,   8,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 32
+	   HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4
+	), // 32
 	MS(1966, MAX_YEAR, 135, 150, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      120,  60,   8,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 33
+	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4
+	), // 33
 	MS(1970, MAX_YEAR, 170, 170, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      130,  70,   9,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 34
+	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4
+	), // 34
 	MS(1970, MAX_YEAR, 170, 170, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      130,  70,   9,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 35
+	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4
+	), // 35
 	MS(1974, MAX_YEAR, 210, 200, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      140,  80,  10,   3,   5,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 36
+	   HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4
+	), // 36
 	MS(1974, MAX_YEAR, 210, 200, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      140,  80,  10,   3,   5,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 37
-	MS(   0, MAX_YEAR,  10,  60, STR_TOWN_BUILDING_NAME_HOUSES_2,                  60,   5,   2,   1,   1,
+	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4
+	), // 37
+	MS(   0, MAX_YEAR,  10,  60, STR_TOWN_BUILDING_NAME_HOUSES_2,                  60,   5,   2,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 38
-	MS(   0, MAX_YEAR,  10,  60, STR_TOWN_BUILDING_NAME_HOUSES_2,                  60,   5,   2,   1,   1,
+	   HZ_SUBARTC_BELOW | HZ_ZON1
+	), // 38
+	MS(   0, MAX_YEAR,  10,  60, STR_TOWN_BUILDING_NAME_HOUSES_2,                  60,   5,   2,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 39
-	MS(   0, MAX_YEAR,  25, 100, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,       80,  20,   3,   1,   1,
+	   HZ_SUBARTC_ABOVE | HZ_ZON1
+	), // 39
+	MS(   0, MAX_YEAR,  25, 100, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,       80,  20,   3,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 3A
-	MS(   0, MAX_YEAR,  25, 100, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,       80,  20,   3,   1,   1,
+	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 3A
+	MS(   0, MAX_YEAR,  25, 100, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,       80,  20,   3,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 3B
+	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 3B
 	MS(   0, MAX_YEAR,   6,  85, STR_TOWN_BUILDING_NAME_CHURCH_1,                 230,   2,   2,   0,   0,
 	   BUILDING_IS_CHURCH | TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 3C
+	   HZ_SUBARTC_BELOW | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 3C
 	MS(   0, MAX_YEAR,   6,  85, STR_TOWN_BUILDING_NAME_CHURCH_1,                 230,   2,   2,   0,   0,
 	   BUILDING_IS_CHURCH | TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 3D
-	MS(   0, MAX_YEAR,  17,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   7,   3,   1,   1,
+	   HZ_SUBARTC_ABOVE | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 3D
+	MS(   0, MAX_YEAR,  17,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   7,   3,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 3E
-	MS(   0, MAX_YEAR,  17,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   7,   3,   1,   1,
+	   HZ_SUBARTC_BELOW | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 3E
+	MS(   0, MAX_YEAR,  17,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   7,   3,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 3F
+	   HZ_SUBARTC_ABOVE | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 3F
 	MS(   0, 1960,      90, 140, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      110,  45,   6,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW| HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 40
+	   HZ_SUBARTC_BELOW| HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 40
 	MS(   0, 1960,      90, 140, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      110,  45,   6,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE| HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 41
-	MS(1972, MAX_YEAR, 140, 160, STR_TOWN_BUILDING_NAME_HOTEL_1,                  160,  25,   6,   1,   3,
+	   HZ_SUBARTC_ABOVE| HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 41
+	MS(1972, MAX_YEAR, 140, 160, STR_TOWN_BUILDING_NAME_HOTEL_1,                  160,  25,   6,   1,  -3,
 	   TILE_SIZE_1x2,
-	   HZ_SUBARTC_BELOW| HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 42
+	   HZ_SUBARTC_BELOW| HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 42
 	MS(1972, MAX_YEAR,   0, 160, STR_TOWN_BUILDING_NAME_HOTEL_1,                  160,  25,   6,   1,   2,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 43
-	MS(1972, MAX_YEAR, 140, 160, STR_TOWN_BUILDING_NAME_HOTEL_1,                  160,  25,   6,   1,   3,
+	   HZ_NOZNS
+	), // 43
+	MS(1972, MAX_YEAR, 140, 160, STR_TOWN_BUILDING_NAME_HOTEL_1,                  160,  25,   6,   1,  -3,
 	   TILE_SIZE_1x2,
-	   HZ_SUBARTC_ABOVE| HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 44
+	   HZ_SUBARTC_ABOVE| HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 44
 	MS(1972, MAX_YEAR,   0, 160, STR_TOWN_BUILDING_NAME_HOTEL_1,                  160,  25,   6,   1,   2,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 45
+	   HZ_NOZNS
+	), // 45
 	MS(1963, MAX_YEAR, 105, 130, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      105,  50,   7,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 46
+	   HZ_SUBARTC_BELOW | HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 46
 	MS(1963, MAX_YEAR, 105, 130, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      105,  50,   7,   2,   3,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE| HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 47
+	   HZ_SUBARTC_ABOVE| HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 47
 	MS(1978, MAX_YEAR, 190, 190, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      135,  75,   9,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 48
+	   HZ_SUBARTC_BELOW | HZ_ZON5 | HZ_ZON4
+	), // 48
 	MS(1978, MAX_YEAR, 190, 190, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      135,  75,   9,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 49
+	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4
+	), // 49
 	MS(1967, MAX_YEAR, 250, 140, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      200,  60,   7,   2,   2,
 	   TILE_SIZE_2x1,
-	   HZ_SUBARTC_BELOW| HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 4A
+	   HZ_SUBARTC_BELOW| HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 4A
 	MS(1967, MAX_YEAR,   0, 140, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      200,  60,   7,   2,   2,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 4B
+	   HZ_NOZNS
+	), // 4B
 	MS(1967, MAX_YEAR, 250, 140, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      200,  60,   7,   2,   2,
 	   TILE_SIZE_2x1,
-	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 4C
+	   HZ_SUBARTC_ABOVE | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 4C
 	MS(1967, MAX_YEAR,   0, 140, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      200,  60,   7,   2,   2,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 4D
-	MS(   0, MAX_YEAR,  16,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   6,   3,   1,   2,
+	   HZ_NOZNS
+	), // 4D
+	MS(   0, MAX_YEAR,  16,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   6,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 4E
-	MS(   0, MAX_YEAR,  16,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   6,   3,   1,   2,
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 4E
+	MS(   0, MAX_YEAR,  16,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   6,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 4F
-	MS(   0, MAX_YEAR,  16,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   5,   3,   1,   2,
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 4F
+	MS(   0, MAX_YEAR,  16,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   5,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 50
-	MS(   0, MAX_YEAR,   7,  30, STR_TOWN_BUILDING_NAME_HOUSES_2,                  30,   4,   3,   1,   1,
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 50
+	MS(   0, MAX_YEAR,   7,  30, STR_TOWN_BUILDING_NAME_HOUSES_2,                  30,   4,   3,   1,  -1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 51
+	   HZ_SUBTROPIC | HZ_ZON1
+	), // 51
 	MS(   0, MAX_YEAR,  45, 130, STR_TOWN_BUILDING_NAME_FLATS_1,                   95,  15,   6,   2,   1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 52
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 52
 	MS(   0, MAX_YEAR,   8,  90, STR_TOWN_BUILDING_NAME_CHURCH_1,                 200,   3,   2,   0,   0,
 	   BUILDING_IS_CHURCH | TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 53
-	MS(   0, MAX_YEAR,  18,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   7,   3,   1,   2,
+	   HZ_SUBTROPIC | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 53
+	MS(   0, MAX_YEAR,  18,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   7,   3,   1,  -2,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2,
-	   CT_PASSENGERS, CT_MAIL, CT_FOOD), // 54
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2
+	), // 54
 	MS(1973, MAX_YEAR,  90, 110, STR_TOWN_BUILDING_NAME_FLATS_1,                   95,  24,   6,   2,   1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 55
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 55
 	MS(1962, MAX_YEAR, 120, 120, STR_TOWN_BUILDING_NAME_FLATS_1,                   95,  25,   6,   2,   1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 56
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 56
 	MS(1984, MAX_YEAR, 250, 190, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      140,  80,   8,   3,   4,
 	   TILE_SIZE_2x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 57
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4
+	), // 57
 	MS(1984, MAX_YEAR,   0, 190, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      140,  80,   8,   3,   4,
 	   TILE_NO_FLAG,
-	   HZ_SUBTROPIC,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 58
+	   HZ_SUBTROPIC
+	), // 58
 	MS(   0, MAX_YEAR,  80, 110, STR_TOWN_BUILDING_NAME_FLATS_1,                   95,  23,   6,   2,   1,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 59
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 59
 	MS(1993, MAX_YEAR, 180, 180, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      150,  90,   8,   3,   4,
 	   TILE_SIZE_1x1,
-	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_GOODS), // 5A
+	   HZ_SUBTROPIC | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 5A
 	MS(   0, MAX_YEAR,   8,  90, STR_TOWN_BUILDING_NAME_CHURCH_1,                 200,   3,   2,   0,   0,
 	   BUILDING_IS_CHURCH | TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 5B
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 5B
 	MS(   0, MAX_YEAR,  18,  90, STR_TOWN_BUILDING_NAME_HOUSES_2,                  90,   5,   6,   2,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 5C
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 5C
 	MS(   0, MAX_YEAR,   7,  70, STR_TOWN_BUILDING_NAME_HOUSES_2,                  50,   3,   3,   1,   1,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 5D
+	   HZ_TOYLND | HZ_ZON2 | HZ_ZON1
+	), // 5D
 	MS(   0, MAX_YEAR,  15,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 5E
+	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 5E
 	MS(   0, MAX_YEAR,  17,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 5F
+	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 5F
 	MS(   0, MAX_YEAR,  19,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 60
+	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 60
 	MS(   0, MAX_YEAR,  21,  80, STR_TOWN_BUILDING_NAME_HOUSES_2,                  75,   6,   3,   1,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 61
+	   HZ_TOYLND | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 61
 	MS(   0, MAX_YEAR,  75, 160, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      130,  20,   8,   4,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 62
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 62
 	MS(   0, MAX_YEAR,  35,  90, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   9,   4,   1,   2,
 	   TILE_SIZE_1x2,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 63
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 63
 	MS(   0, MAX_YEAR,   0,  90, STR_TOWN_BUILDING_NAME_HOUSES_2,                  80,   0,   4,   1,   2,
 	   TILE_NO_FLAG,
-	   HZ_NOZNS,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 64
+	   HZ_NOZNS
+	), // 64
 	MS(   0, MAX_YEAR,  85, 150, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      130,  18,   8,   4,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 65
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 65
 	MS(   0, MAX_YEAR,  11,  60, STR_TOWN_BUILDING_NAME_IGLOO_1,                   45,   3,   3,   1,   1,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 66
+	   HZ_TOYLND | HZ_ZON1
+	), // 66
 	MS(   0, MAX_YEAR,  10,  60, STR_TOWN_BUILDING_NAME_TEPEES_1,                  45,   3,   3,   1,   1,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 67
-	MS(   0, MAX_YEAR,  67, 140, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      130,  22,   8,   4,   4,
+	   HZ_TOYLND | HZ_ZON1
+	), // 67
+	MS(   0, MAX_YEAR,  67, 140, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      130,  22,   8,   4,  -4,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_FIZZY_DRINKS), // 68
-	MS(   0, MAX_YEAR,  86, 145, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      130,  23,   8,   4,   4,
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 68
+	MS(   0, MAX_YEAR,  86, 145, STR_TOWN_BUILDING_NAME_SHOPS_AND_OFFICES_1,      130,  23,   8,   4,  -4,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_FIZZY_DRINKS), // 69
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 69
 	MS(   0, MAX_YEAR,  95, 165, STR_TOWN_BUILDING_NAME_TALL_OFFICE_BLOCK_1,      130,  28,   8,   4,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 6A
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 6A
 	MS(   0, MAX_YEAR,  30,  90, STR_TOWN_BUILDING_NAME_STATUE_1,                  70,  10,   4,   1,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 6B
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3
+	), // 6B
 	MS(   0, MAX_YEAR,  25,  75, STR_TOWN_BUILDING_NAME_TEAPOT_HOUSE_1,            65,   8,   3,   1,   2,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_CANDY), // 6C
-	MS(   0, MAX_YEAR,  18,  85, STR_TOWN_BUILDING_NAME_PIGGY_BANK_1,              95,   7,   3,   2,   4,
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 6C
+	MS(   0, MAX_YEAR,  18,  85, STR_TOWN_BUILDING_NAME_PIGGY_BANK_1,              95,   7,   3,   2,  -4,
 	   TILE_SIZE_1x1,
-	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1,
-	   CT_PASSENGERS, CT_MAIL, CT_FIZZY_DRINKS), // 6D
+	   HZ_TOYLND | HZ_ZON5 | HZ_ZON4 | HZ_ZON3 | HZ_ZON2 | HZ_ZON1
+	), // 6D
 };
 #undef MS
 

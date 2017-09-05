@@ -104,7 +104,7 @@ struct HouseSpec {
 	StringID building_name;            ///< building name
 	uint16 remove_rating_decrease;     ///< rating decrease if removed
 	byte mail_generation;              ///< mail generation multiplier (tile based, as the acceptances below)
-	byte cargo_acceptance[3];          ///< acceptance level for the cargo slots
+	int8 cargo_acceptance[3];          ///< acceptance level for the cargo slots; cargo_acceptance[2] < 0 refers to CT_FOOD/CT_FIZZY_DRINKS
 	CargoID accepts_cargo[3];          ///< 3 input cargo slots
 	BuildingFlags building_flags;      ///< some flags that describe the house (size, stadium etc...)
 	HouseZones building_availability;  ///< where can it be built (climates, zones)

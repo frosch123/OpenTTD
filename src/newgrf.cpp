@@ -2394,21 +2394,9 @@ static ChangeInfoResult TownHouseChangeInfo(uint hid, int numinfo, int prop, Byt
 				housespec->cargo_acceptance[prop - 0x0D] = buf->ReadByte();
 				break;
 
-			case 0x0F: { // Goods/candy, food/fizzy drinks acceptance
-				int8 goods = buf->ReadByte();
-
-				/* If value of goods is negative, it means in fact food or, if in toyland, fizzy_drink acceptance.
-				 * Else, we have "standard" 3rd cargo type, goods or candy, for toyland once more */
-				CargoID cid = (goods >= 0) ? ((_settings_game.game_creation.landscape == LT_TOYLAND) ? CT_CANDY : CT_GOODS) :
-						((_settings_game.game_creation.landscape == LT_TOYLAND) ? CT_FIZZY_DRINKS : CT_FOOD);
-
-				/* Make sure the cargo type is valid in this climate. */
-				if (!CargoSpec::Get(cid)->IsValid()) goods = 0;
-
-				housespec->accepts_cargo[2] = cid;
-				housespec->cargo_acceptance[2] = abs(goods); // but we do need positive value here
+			case 0x0F: // Goods/candy, food/fizzy drinks acceptance
+				housespec->cargo_acceptance[2] = buf->ReadByte();
 				break;
-			}
 
 			case 0x10: // Local authority rating decrease on removal
 				housespec->remove_rating_decrease = buf->ReadWord();
