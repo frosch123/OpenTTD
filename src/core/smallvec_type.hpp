@@ -206,10 +206,16 @@ public:
 	 * @param item item to remove
 	 * @note it has to be pointer to item in this map. It is overwritten by the last item.
 	 */
-	inline void Erase(T *item)
+	inline void Erase(T *item, uint count = 1)
 	{
-		assert(item >= this->Begin() && item < this->End());
-		*item = this->data[--this->items];
+		T* end = this->End();
+		assert(item >= this->Begin() && item + count <= end);
+
+		this->items -= count;
+		while (count > 0 && item + count < end) {
+			*(item++) = *(--end);
+			count--;
+		}
 	}
 
 	/**

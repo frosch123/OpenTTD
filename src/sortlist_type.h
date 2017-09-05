@@ -108,6 +108,7 @@ public:
 	{
 		if (this->sort_type != n_type) {
 			SETBITS(this->flags, VL_RESORT | VL_FIRST_SORT);
+			CLRBITS(this->flags, VL_DESC);
 			this->sort_type = n_type;
 		}
 	}

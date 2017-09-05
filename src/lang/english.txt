@@ -2035,6 +2035,10 @@ STR_NETWORK_MESSAGE_SERVER_REBOOT                               :{WHITE}The serv
 
 # Content downloading window
 STR_CONTENT_TITLE                                               :{WHITE}Content downloading
+STR_CONTENT_TAG_NAME_CAPTION                                    :{BLACK}Tag
+STR_CONTENT_TAG_NAME_CAPTION_TOOLTIP                            :{BLACK}Search tags for content
+STR_CONTENT_TAG_COUNT_CAPTION                                   :{BLACK}Count
+STR_CONTENT_TAG_COUNT_CAPTION_TOOLTIP                           :{BLACK}Number of appearances of the tag
 STR_CONTENT_TYPE_CAPTION                                        :{BLACK}Type
 STR_CONTENT_TYPE_CAPTION_TOOLTIP                                :{BLACK}Type of the content
 STR_CONTENT_NAME_CAPTION                                        :{BLACK}Name

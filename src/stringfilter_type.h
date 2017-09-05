@@ -53,6 +53,8 @@ public:
 	~StringFilter() { free(this->filter_buffer); }
 
 	void SetFilterTerm(const char *str);
+	void ToggleWord(const char *str);
+	void GetFilterTerm(struct Textbuf *textbuf);
 
 	/**
 	 * Check whether any filter words were entered.

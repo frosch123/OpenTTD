@@ -27,6 +27,11 @@ enum NetworkContentListWidgets {
 	WID_NCL_FILTER_CAPT,    ///< Caption for the filter editbox.
 	WID_NCL_FILTER,         ///< Filter editbox.
 
+	WID_NCL_TAG_NAME,       ///< 'Tagname' button.
+	WID_NCL_TAG_COUNT,      ///< 'Tagcount' button.
+	WID_NCL_TAG_MATRIX,     ///< Panel with list of tags.
+	WID_NCL_TAG_SCROLLBAR,  ///< Scrollbar of tag matrix.
+
 	WID_NCL_CHECKBOX,       ///< Button above checkboxes.
 	WID_NCL_TYPE,           ///< 'Type' button.
 	WID_NCL_NAME,           ///< 'Name' button.

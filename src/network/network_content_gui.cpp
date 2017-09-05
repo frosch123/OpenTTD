@@ -277,12 +277,57 @@ public:
 
 /** Window that lists the content that's at the content server */
 class NetworkContentListWindow : public QueryStringBaseWindow, ContentCallback {
+	/** Item in the tag list */
+	struct ContentTag {
+		const char *name; ///< Name of tag
+		uint count;       ///< Number of usages
+	};
+
+	/** Summary no tags and their number of appearances */
+	struct ContentTagSummary {
+	private:
+		SmallVector<ContentTag, 4> tags;
+	public:
+		~ContentTagSummary() { this->Reset(); }
+
+		const ContentTag *Begin() const { return this->tags.Begin(); }
+		const ContentTag *End() const { return this->tags.End(); }
+
+		/** Clear the summary */
+		void Reset()
+		{
+			for (ContentTag *it = this->tags.Begin(); it != this->tags.End(); ++it) {
+				delete it->name;
+			}
+			this->tags.Reset();
+		}
+
+		/**
+		 * Add a tag to the summary.
+		 * @param tag Tag name
+		 */
+		void CountTag(const char* tag)
+		{
+			for (ContentTag *it = this->tags.Begin(); it != this->tags.End(); ++it) {
+				if (strcmp(tag, it->name) == 0) {
+					it->count++;
+					return;
+				}
+			}
+			ContentTag *item = this->tags.Append();
+			item->name = strdup(tag);
+			item->count = 1;
+		}
+	};
+
 	/** List with content infos. */
 	typedef GUIList<const ContentInfo *, StringFilter &> GUIContentList;
 
-	static const uint EDITBOX_MAX_SIZE   =  50; ///< Maximum size of the editbox in characters.
-	static const uint EDITBOX_MAX_LENGTH = 300; ///< Maximum size of the editbox in pixels.
+	typedef GUIList<const ContentTag*> GUITagList;
 
+	static const uint EDITBOX_MAX_SIZE   = 250; ///< Maximum size of the editbox in characters.
+
+	static Listing last_tag_sorting; ///< The last tag sorting setting.
 	static Listing last_sorting;     ///< The last sorting setting.
 	static Filtering last_filtering; ///< The last filtering setting.
 	static GUIContentList::SortFunction * const sorter_funcs[];   ///< Sorter functions
@@ -291,10 +336,49 @@ class NetworkContentListWindow : public QueryStringBaseWindow, ContentCallback {
 	bool auto_select;            ///< Automatically select all content when the meta-data becomes available
 	StringFilter string_filter;  ///< Filter for content list
 
+	ContentTagSummary tags;      ///< Information about tags
+	GUITagList tag_list;         ///< List of tags.
+	bool show_tag_list;          ///< Whether to display the tag list.
+	static GUITagList::SortFunction * const tag_sorter_funcs[];
+	Scrollbar *tagscroll;        ///< Scrollbar of the tag list.
+
 	const ContentInfo *selected; ///< The selected content info
 	int list_pos;                ///< Our position in the list
 	uint filesize_sum;           ///< The sum of all selected file sizes
 	Scrollbar *vscroll;          ///< Cache of the vertical scrollbar
+
+	void ToggleFilterTag(const char *name)
+	{
+		this->string_filter.ToggleWord(name);
+		this->string_filter.GetFilterTerm(&this->text);
+		this->content.SetFilterState(!StrEmpty(this->edit_str_buf));
+		this->content.ForceRebuild();
+		this->SetDirty();
+		SetWindowDirty(WC_OSK, 0);
+	}
+
+	void BuildTagList()
+	{
+		if (!this->tag_list.NeedRebuild()) return;
+
+		this->tag_list.Clear();
+		this->tags.Reset();
+
+		for (const ContentInfo **it = this->content.Begin(); it != this->content.End(); ++it) {
+			for (int i = 0; i < (*it)->tag_count; i++) {
+				this->tags.CountTag((*it)->tags[i]);
+			}
+		}
+
+		for (const ContentTag *it = this->tags.Begin(); it != this->tags.End(); ++it) {
+			*this->tag_list.Append() = it;
+		}
+
+		this->tag_list.RebuildDone();
+		this->tag_list.Sort();
+
+		this->tagscroll->SetCount(this->tag_list.Length());
+	}
 
 	/**
 	 * (Re)build the network game list as its amount has changed because
@@ -311,6 +395,8 @@ class NetworkContentListWindow : public QueryStringBaseWindow, ContentCallback {
 			*this->content.Append() = *iter;
 		}
 
+		this->tag_list.ForceRebuild();
+
 		this->FilterContentList();
 		this->content.Compact();
 		this->content.RebuildDone();
@@ -318,6 +404,18 @@ class NetworkContentListWindow : public QueryStringBaseWindow, ContentCallback {
 
 		this->vscroll->SetCount(this->content.Length()); // Update the scrollbar
 		this->ScrollToSelected();
+	}
+
+	/** Sort tag by count. */
+	static int CDECL TagCountSorter(const ContentTag * const *a, const ContentTag * const *b)
+	{
+		return (*a)->count - (*b)->count;
+	}
+
+	/** Sort tag by name. */
+	static int CDECL TagNameSorter(const ContentTag * const *a, const ContentTag * const *b)
+	{
+		return strnatcmp((*a)->name, (*b)->name); // Sort by name (natural sorting).
 	}
 
 	/** Sort content by name. */
@@ -378,6 +476,8 @@ class NetworkContentListWindow : public QueryStringBaseWindow, ContentCallback {
 	{
 		if (!this->content.Filter(this->string_filter)) return;
 
+		this->tag_list.ForceRebuild();
+
 		/* update list position */
 		for (ConstContentIterator iter = this->content.Begin(); iter != this->content.End(); iter++) {
 			if (*iter == this->selected) {
@@ -405,23 +505,29 @@ public:
 	 * @param desc the window description to pass to Window's constructor.
 	 * @param select_all Whether the select all button is allowed or not.
 	 */
-	NetworkContentListWindow(const WindowDesc *desc, bool select_all) :
+	NetworkContentListWindow(const WindowDesc *desc, bool select_all, bool show_tag_list) :
 			QueryStringBaseWindow(EDITBOX_MAX_SIZE),
 			auto_select(select_all),
+			show_tag_list(show_tag_list),
 			selected(NULL),
 			list_pos(0)
 	{
 		this->CreateNestedTree(desc);
+		this->tagscroll = this->GetScrollbar(WID_NCL_TAG_SCROLLBAR);
 		this->vscroll = this->GetScrollbar(WID_NCL_SCROLLBAR);
 		this->FinishInitNested(desc, WN_NETWORK_WINDOW_CONTENT_LIST);
 
 		this->GetWidget<NWidgetStacked>(WID_NCL_SEL_ALL_UPDATE)->SetDisplayedPlane(select_all);
+		// TODO show_tag_list
 
 		this->afilter = CS_ALPHANUMERAL;
-		this->text.Initialize(this->edit_str_buf, this->edit_str_size, EDITBOX_MAX_LENGTH);
+		this->text.Initialize(this->edit_str_buf, this->edit_str_size);
 		this->SetFocusedWidget(WID_NCL_FILTER);
 
 		_network_content_client.AddCallback(this);
+		this->tag_list.SetListing(this->last_tag_sorting);
+		this->tag_list.SetSortFuncs(this->tag_sorter_funcs);
+		this->tag_list.ForceRebuild();
 		this->content.SetListing(this->last_sorting);
 		this->content.SetFiltering(this->last_filtering);
 		this->content.SetSortFuncs(this->sorter_funcs);
@@ -454,6 +560,11 @@ public:
 				break;
 			}
 
+			case WID_NCL_TAG_COUNT:
+				size->width += 2 * WD_SORTBUTTON_ARROW_WIDTH; // Make space for the arrow
+				break;
+
+			case WID_NCL_TAG_MATRIX:
 			case WID_NCL_MATRIX:
 				resize->height = FONT_HEIGHT_NORMAL + WD_MATRIX_TOP + WD_MATRIX_BOTTOM;
 				size->height = 10 * resize->height;
@@ -476,23 +587,61 @@ public:
 			case WID_NCL_MATRIX:
 				this->DrawMatrix(r);
 				break;
+
+			case WID_NCL_TAG_MATRIX:
+				this->DrawTagMatrix(r);
+				break;
 		}
 	}
 
 	virtual void OnPaint()
 	{
-		const SortButtonState arrow = this->content.IsDescSortOrder() ? SBS_DOWN : SBS_UP;
-
 		if (this->content.NeedRebuild()) {
 			this->BuildContentList();
 		}
 
+		if (this->tag_list.NeedRebuild()) {
+			this->BuildTagList();
+		}
+
 		this->DrawWidgets();
 
+		const SortButtonState tag_arrow = this->tag_list.IsDescSortOrder() ? SBS_DOWN : SBS_UP;
+		switch (this->tag_list.SortType()) {
+			case WID_NCL_TAG_NAME  - WID_NCL_TAG_NAME: this->DrawSortButtonState(WID_NCL_TAG_NAME,  tag_arrow); break;
+			case WID_NCL_TAG_COUNT - WID_NCL_TAG_NAME: this->DrawSortButtonState(WID_NCL_TAG_COUNT, tag_arrow); break;
+		}
+
+		const SortButtonState arrow = this->content.IsDescSortOrder() ? SBS_DOWN : SBS_UP;
 		switch (this->content.SortType()) {
 			case WID_NCL_CHECKBOX - WID_NCL_CHECKBOX: this->DrawSortButtonState(WID_NCL_CHECKBOX, arrow); break;
 			case WID_NCL_TYPE     - WID_NCL_CHECKBOX: this->DrawSortButtonState(WID_NCL_TYPE,     arrow); break;
 			case WID_NCL_NAME     - WID_NCL_CHECKBOX: this->DrawSortButtonState(WID_NCL_NAME,     arrow); break;
+		}
+	}
+
+	/**
+	 * Draw/fill the tag matrix with the list of tags.
+	 * @param r The boundaries of the matrix.
+	 */
+	void DrawTagMatrix(const Rect &r) const
+	{
+		const NWidgetBase *nwi_name = this->GetWidget<NWidgetBase>(WID_NCL_TAG_NAME);
+		const NWidgetBase *nwi_count = this->GetWidget<NWidgetBase>(WID_NCL_TAG_COUNT);
+
+		/* Fill the matrix with the information */
+		uint y = r.top;
+		int cnt = 0;
+		for (const ContentTag * const *iter = this->tag_list.Get(this->tagscroll->GetPosition()); iter != this->tag_list.End() && cnt < this->tagscroll->GetCapacity(); iter++, cnt++) {
+			const ContentTag *ct = *iter;
+
+			SetDParamStr(0, ct->name);
+			DrawString(nwi_name->pos_x + WD_FRAMERECT_LEFT, nwi_name->pos_x + nwi_name->current_x - WD_FRAMERECT_RIGHT, y + WD_MATRIX_TOP, STR_JUST_RAW_STRING, TC_BLACK);
+
+			SetDParam(0, ct->count);
+			DrawString(nwi_count->pos_x, nwi_count->pos_x + nwi_count->current_x - 1, y + WD_MATRIX_TOP, STR_JUST_INT, TC_BLACK, SA_RIGHT | SA_FORCE);
+
+			y += this->resize.step_height;
 		}
 	}
 
@@ -659,6 +808,14 @@ public:
 		}
 
 		switch (widget) {
+			case WID_NCL_TAG_MATRIX: {
+				uint id_v = this->tagscroll->GetScrolledRowFromWidget(pt.y, this, WID_NCL_TAG_MATRIX);
+				if (id_v >= this->tag_list.Length()) return; // click out of bounds
+
+				this->ToggleFilterTag((*this->tag_list.Get(id_v))->name);
+				break;
+			}
+
 			case WID_NCL_MATRIX: {
 				uint id_v = this->vscroll->GetScrolledRowFromWidget(pt.y, this, WID_NCL_MATRIX);
 				if (id_v >= this->content.Length()) return; // click out of bounds
@@ -675,6 +832,18 @@ public:
 				this->InvalidateData();
 				break;
 			}
+
+			case WID_NCL_TAG_NAME:
+			case WID_NCL_TAG_COUNT:
+				if (this->tag_list.SortType() == widget - WID_NCL_TAG_NAME) {
+					this->tag_list.ToggleSortOrder();
+				} else {
+					this->tag_list.SetSortType(widget - WID_NCL_TAG_NAME);
+					this->tag_list.ForceResort();
+					this->tag_list.Sort();
+				}
+				this->SetDirty();
+				break;
 
 			case WID_NCL_CHECKBOX:
 			case WID_NCL_TYPE:
@@ -793,6 +962,8 @@ public:
 	{
 		this->vscroll->SetCapacityFromWidget(this, WID_NCL_MATRIX);
 		this->GetWidget<NWidgetCore>(WID_NCL_MATRIX)->widget_data = (this->vscroll->GetCapacity() << MAT_ROW_START) + (1 << MAT_COL_START);
+		this->tagscroll->SetCapacityFromWidget(this, WID_NCL_TAG_MATRIX);
+		this->GetWidget<NWidgetCore>(WID_NCL_TAG_MATRIX)->widget_data = (this->tagscroll->GetCapacity() << MAT_ROW_START) + (1 << MAT_COL_START);
 	}
 
 	virtual void OnReceiveContentInfo(const ContentInfo *rci)
@@ -865,6 +1036,7 @@ public:
 	}
 };
 
+Listing NetworkContentListWindow::last_tag_sorting = {true, 1};
 Listing NetworkContentListWindow::last_sorting = {false, 1};
 Filtering NetworkContentListWindow::last_filtering = {false, 0};
 
@@ -876,6 +1048,11 @@ NetworkContentListWindow::GUIContentList::SortFunction * const NetworkContentLis
 
 NetworkContentListWindow::GUIContentList::FilterFunction * const NetworkContentListWindow::filter_funcs[] = {
 	&TagNameFilter,
+};
+
+NetworkContentListWindow::GUITagList::SortFunction * const NetworkContentListWindow::tag_sorter_funcs[] = {
+	&TagNameSorter,
+	&TagCountSorter,
 };
 
 /** The widgets for the content list. */
@@ -894,6 +1071,21 @@ static const NWidgetPart _nested_network_content_list_widgets[] = {
 		EndContainer(),
 		NWidget(NWID_SPACER), SetMinimalSize(0, 7), SetResize(1, 0),
 		NWidget(NWID_HORIZONTAL, NC_EQUALSIZE), SetPIP(8, 8, 8),
+			/* Tag list */
+			NWidget(NWID_VERTICAL),
+				NWidget(NWID_HORIZONTAL),
+					NWidget(NWID_VERTICAL),
+						NWidget(NWID_HORIZONTAL),
+							NWidget(WWT_PUSHTXTBTN, COLOUR_WHITE, WID_NCL_TAG_NAME), SetResize(1, 0), SetFill(1, 0),
+									SetDataTip(STR_CONTENT_TAG_NAME_CAPTION, STR_CONTENT_TAG_NAME_CAPTION_TOOLTIP),
+							NWidget(WWT_PUSHTXTBTN, COLOUR_WHITE, WID_NCL_TAG_COUNT),
+									SetDataTip(STR_CONTENT_TAG_COUNT_CAPTION, STR_CONTENT_TAG_COUNT_CAPTION_TOOLTIP),
+						EndContainer(),
+						NWidget(WWT_MATRIX, COLOUR_LIGHT_BLUE, WID_NCL_TAG_MATRIX), SetResize(1, 14), SetFill(1, 1), SetScrollbar(WID_NCL_TAG_SCROLLBAR), SetDataTip(STR_NULL, STR_NULL),
+					EndContainer(),
+					NWidget(NWID_VSCROLLBAR, COLOUR_LIGHT_BLUE, WID_NCL_TAG_SCROLLBAR),
+				EndContainer(),
+			EndContainer(),
 			/* Left side. */
 			NWidget(NWID_VERTICAL),
 				NWidget(NWID_HORIZONTAL),
@@ -975,7 +1167,7 @@ void ShowNetworkContentListWindow(ContentVector *cv, ContentType type)
 	}
 
 	DeleteWindowById(WC_NETWORK_WINDOW, WN_NETWORK_WINDOW_CONTENT_LIST);
-	new NetworkContentListWindow(&_network_content_list_desc, cv != NULL);
+	new NetworkContentListWindow(&_network_content_list_desc, cv != NULL, cv == NULL);
 #else
 	ShowErrorMessage(STR_CONTENT_NO_ZLIB, STR_CONTENT_NO_ZLIB_SUB, WL_ERROR);
 	/* Connection failed... clean up the mess */
