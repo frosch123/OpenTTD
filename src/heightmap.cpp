@@ -328,11 +328,6 @@ static void GrayscaleToMapHeights(uint img_width, uint img_height, byte *map)
 		col_pad = (1 + width - ((img_width * img_scale) / num_div)) / 2;
 	}
 
-	if (_settings_game.construction.freeform_edges) {
-		for (uint x = 0; x < MapSizeX(); x++) MakeVoid(TileXY(x, 0));
-		for (uint y = 0; y < MapSizeY(); y++) MakeVoid(TileXY(0, y));
-	}
-
 	/* Form the landscape */
 	for (row = 0; row < height; row++) {
 		for (col = 0; col < width; col++) {

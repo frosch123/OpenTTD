@@ -993,12 +993,6 @@ void GenerateTerrainPerlin()
 
 	IncreaseGeneratingWorldProgress(GWP_LANDSCAPE);
 
-	/* First make sure the tiles at the north border are void tiles if needed. */
-	if (_settings_game.construction.freeform_edges) {
-		for (int y = 0; y < _height_map.size_y - 1; y++) MakeVoid(_height_map.size_x * y);
-		for (int x = 0; x < _height_map.size_x;     x++) MakeVoid(x);
-	}
-
 	int max_height = H2I(TGPGetMaxHeight());
 
 	/* Transfer height map into OTTD map */

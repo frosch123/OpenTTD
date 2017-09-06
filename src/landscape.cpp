@@ -770,9 +770,15 @@ void InitializeLandscape()
 			SetTropicZone(sizex * y + x, TROPICZONE_NORMAL);
 			ClearBridgeMiddle(sizex * y + x);
 		}
-		MakeVoid(sizex * y + x);
+		MakeVoid(sizex * y + x, true);
 	}
-	for (uint x = 0; x < sizex; x++) MakeVoid(sizex * y + x);
+
+	if (_settings_game.construction.freeform_edges) {
+		for (uint y = 0; y < maxy; y++) MakeVoid(sizex * y, true);
+		for (uint x = 0; x < sizex; x++) MakeVoid(x, true);
+	}
+
+	for (uint x = 0; x < sizex; x++) MakeVoid(sizex * y + x, true);
 }
 
 static const byte _genterrain_tbl_1[5] = { 10, 22, 33, 37, 4  };
@@ -1229,10 +1235,6 @@ void GenerateLandscape(byte mode)
 		GenerateTerrainPerlin();
 	} else {
 		SetGeneratingWorldProgress(GWP_LANDSCAPE, steps + GLS_ORIGINAL);
-		if (_settings_game.construction.freeform_edges) {
-			for (uint x = 0; x < MapSizeX(); x++) MakeVoid(TileXY(x, 0));
-			for (uint y = 0; y < MapSizeY(); y++) MakeVoid(TileXY(0, y));
-		}
 		switch (_settings_game.game_creation.landscape) {
 			case LT_ARCTIC: {
 				uint32 r = Random();

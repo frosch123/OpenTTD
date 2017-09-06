@@ -18,10 +18,10 @@
  * Make a nice void tile ;)
  * @param t the tile to make void
  */
-static inline void MakeVoid(TileIndex t)
+static inline void MakeVoid(TileIndex t, bool reset_height)
 {
 	SetTileType(t, MP_VOID);
-	SetTileHeight(t, 0);
+	if (reset_height) SetTileHeight(t, 0);
 	_m[t].m1 = 0;
 	_m[t].m2 = 0;
 	_m[t].m3 = 0;

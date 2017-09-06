@@ -118,12 +118,6 @@ static void _GenerateWorld(void *)
 		if (_gw.mode == GWM_EMPTY) {
 			SetGeneratingWorldProgress(GWP_OBJECT, 1);
 
-			/* Make sure the tiles at the north border are void tiles if needed. */
-			if (_settings_game.construction.freeform_edges) {
-				for (uint row = 0; row < MapSizeY(); row++) MakeVoid(TileXY(0, row));
-				for (uint col = 0; col < MapSizeX(); col++) MakeVoid(TileXY(col, 0));
-			}
-
 			/* Make the map the height of the setting */
 			if (_game_mode != GM_MENU) FlatEmptyWorld(_settings_game.game_creation.se_flat_world_height);
 

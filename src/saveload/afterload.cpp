@@ -205,8 +205,8 @@ static void UpdateVoidTiles()
 {
 	uint i;
 
-	for (i = 0; i < MapMaxY(); ++i) MakeVoid(i * MapSizeX() + MapMaxX());
-	for (i = 0; i < MapSizeX(); ++i) MakeVoid(MapSizeX() * MapMaxY() + i);
+	for (i = 0; i < MapMaxY(); ++i) MakeVoid(i * MapSizeX() + MapMaxX(), true);
+	for (i = 0; i < MapSizeX(); ++i) MakeVoid(MapSizeX() * MapMaxY() + i, true);
 }
 
 static inline RailType UpdateRailType(RailType rt, RailType min)
