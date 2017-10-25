@@ -35,6 +35,8 @@ genworld.cpp
 gfx.cpp
 gfxinit.cpp
 gfx_layout.cpp
+gfx_layout_fallback.cpp
+gfx_layout_icu.cpp
 goal.cpp
 ground_vehicle.cpp
 heightmap.cpp

@@ -19,13 +19,6 @@
 #include <map>
 #include <string>
 
-#ifdef WITH_ICU_LAYOUT
-#include "layout/ParagraphLayout.h"
-#define ICU_FONTINSTANCE : public LEFontInstance
-#else /* WITH_ICU_LAYOUT */
-#define ICU_FONTINSTANCE
-#endif /* WITH_ICU_LAYOUT */
-
 /**
  * Text drawing parameters, which can change while drawing a line, but are kept between multiple parts
  * of the same text, e.g. on line breaks.
@@ -68,30 +61,17 @@ struct FontState {
 /**
  * Container with information about a font.
  */
-class Font ICU_FONTINSTANCE {
+class Font {
 public:
 	FontCache *fc;     ///< The font we are using.
 	TextColour colour; ///< The colour this font has to be.
 
+	/** Factory function to create Font instance. */
+	static Font *Create(FontSize size, TextColour colour);
+
+	virtual ~Font();
+protected:
 	Font(FontSize size, TextColour colour);
-
-#ifdef WITH_ICU_LAYOUT
-	/* Implementation details of LEFontInstance */
-
-	le_int32 getUnitsPerEM() const;
-	le_int32 getAscent() const;
-	le_int32 getDescent() const;
-	le_int32 getLeading() const;
-	float getXPixelsPerEm() const;
-	float getYPixelsPerEm() const;
-	float getScaleFactorX() const;
-	float getScaleFactorY() const;
-	const void *getFontTable(LETag tableTag) const;
-	const void *getFontTable(LETag tableTag, size_t &length) const;
-	LEGlyphID mapCharToGlyph(LEUnicode32 ch) const;
-	void getGlyphAdvance(LEGlyphID glyph, LEPoint &advance) const;
-	le_bool getGlyphPoint(LEGlyphID glyph, le_int32 pointNumber, LEPoint &point) const;
-#endif /* WITH_ICU_LAYOUT */
 };
 
 /** Mapping from index to font. */
