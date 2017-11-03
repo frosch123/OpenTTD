@@ -675,19 +675,55 @@ static uint32 VehicleGetVariable(Vehicle *v, const VehicleScopeResolver *object,
 			 */
 			if (!v->IsGroundVehicle()) return 0;
 
-			const Vehicle *u = v->Move((int8)parameter);
-			if (u == NULL) return 0;
+			int8 position = (int8)parameter;
+			bool prev = position < 0;
+			const Vehicle* front = v->First();
+			TileIndex entering_depot = front->IsInDepot() ? front->tile : INVALID_TILE;
+
+			int dx = 0, dy = 0;
+			const Vehicle *u = v;
+			while (position != 0) {
+				const Vehicle *w = u;
+				if (prev) {
+					u = u->Previous();
+					position++;
+				} else {
+					u = u->Next();
+					position--;
+				}
+				if (u == NULL) return 0;
+
+				if (u->IsInDepot() || w->IsInDepot()) {
+					/* Treat depot as infinite straight track */
+					int l;
+					DiagDirection dir;
+					const Vehicle* f = prev ? u : w;
+					if (u->type == VEH_TRAIN) {
+						l = Train::From(f)->CalcNextVehicleOffset();
+						dir = GetRailDepotDirection(u->tile);
+					} else {
+						l = RoadVehicle::From(f)->CalcNextVehicleOffset();
+						dir = GetRoadDepotDirection(u->tile);
+					}
+					if (u->tile == entering_depot) dir = ReverseDiagDir(dir);
+					TileIndexDiffC diff = TileIndexDiffCByDiagDir(dir);
+					dx += diff.x * l;
+					dy += diff.y * l;
+				} else {
+					dx += (prev ? u->x_pos - w->x_pos : w->x_pos - u->x_pos);
+					dy += (prev ? u->y_pos - w->y_pos : w->y_pos - u->y_pos);
+				}
+			}
 
 			/* Get direction difference. */
-			bool prev = (int8)parameter < 0;
 			uint32 ret = prev ? DirDifference(u->direction, v->direction) : DirDifference(v->direction, u->direction);
 			if (ret > DIRDIFF_REVERSE) ret |= 0x08;
 
 			if (u->vehstatus & VS_HIDDEN) ret |= 0x80;
 
 			/* Get position difference. */
-			ret |= ((prev ? u->x_pos - v->x_pos : v->x_pos - u->x_pos) & 0xFF) << 8;
-			ret |= ((prev ? u->y_pos - v->y_pos : v->y_pos - u->y_pos) & 0xFF) << 16;
+			ret |= (dx & 0xFF) << 8;
+			ret |= (dy & 0xFF) << 16;
 			ret |= ((prev ? u->z_pos - v->z_pos : v->z_pos - u->z_pos) & 0xFF) << 24;
 
 			return ret;
