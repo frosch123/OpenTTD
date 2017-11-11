@@ -1063,6 +1063,14 @@ static void DoDrawVehicle(const Vehicle *v)
 		if (to != TO_INVALID && (IsTransparencySet(to) || IsInvisibilitySet(to))) return;
 	}
 
+	if (v->IsGroundVehicle()) {
+		uint16 gv_flags = v->GetGroundVehicleFlags();
+		if (HasBit(gv_flags, GVF_ARTICULATION_BLOCK)) {
+			if (!HasBit(gv_flags, GVF_ARTICULATION_BLOCK_START)) return;
+			// TODO
+		}
+	}
+
 	StartSpriteCombine();
 	for (uint i = 0; i < v->sprite_seq.count; ++i) {
 		PaletteID pal2 = v->sprite_seq.seq[i].pal;
@@ -1535,6 +1543,7 @@ void Vehicle::UpdateViewport(bool dirty)
 {
 	Rect new_coord;
 	this->sprite_seq.GetBounds(&new_coord);
+	// TODO
 
 	Point pt = RemapCoords(this->x_pos + this->x_offs, this->y_pos + this->y_offs, this->z_pos);
 	new_coord.left   += pt.x;
