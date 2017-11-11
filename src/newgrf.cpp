@@ -1319,6 +1319,10 @@ static ChangeInfoResult RailVehicleChangeInfo(uint engine, int numinfo, int prop
 				break;
 			}
 
+			case PROP_TRAIN_ARTICULATION_BLOCK: // 0x2E articulation block
+				rvi->articulation_block = buf->ReadByte();
+				break;
+
 			default:
 				ret = CommonVehicleChangeInfo(ei, prop, buf);
 				break;
@@ -1506,6 +1510,10 @@ static ChangeInfoResult RoadVehicleChangeInfo(uint engine, int numinfo, int prop
 				}
 				break;
 			}
+
+			case PROP_ROADVEH_ARTICULATION_BLOCK: // 0x26 articulation block
+				rvi->articulation_block = buf->ReadByte();
+				break;
 
 			default:
 				ret = CommonVehicleChangeInfo(ei, prop, buf);

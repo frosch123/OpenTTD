@@ -54,6 +54,8 @@ enum GroundVehicleFlags {
 	GVF_GOINGUP_BIT              = 0,  ///< Vehicle is currently going uphill. (Cached track information for acceleration)
 	GVF_GOINGDOWN_BIT            = 1,  ///< Vehicle is currently going downhill. (Cached track information for acceleration)
 	GVF_SUPPRESS_IMPLICIT_ORDERS = 2,  ///< Disable insertion and removal of automatic orders until the vehicle completes the real order.
+	GVF_ARTICULATION_BLOCK_START = 3,  ///< Vehicle is first part of an articulation block, it defines the graphics for the whole block.
+	GVF_ARTICULATION_BLOCK       = 4,  ///< Vehicle is part of an articulation block, the graphics are defined by the first part only.
 };
 
 /**

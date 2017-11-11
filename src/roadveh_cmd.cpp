@@ -222,6 +222,7 @@ void RoadVehUpdateCache(RoadVehicle *v, bool same_length)
 
 	v->gcache.cached_total_length = 0;
 
+	byte articulation_block = 0;
 	for (RoadVehicle *u = v; u != NULL; u = u->Next()) {
 		/* Check the v->first cache. */
 		assert(u->First() == v);
@@ -242,6 +243,19 @@ void RoadVehUpdateCache(RoadVehicle *v, bool same_length)
 
 		/* Update cargo aging period. */
 		u->vcache.cached_cargo_age_period = GetVehicleProperty(u, PROP_ROADVEH_CARGO_AGE_PERIOD, EngInfo(u->engine_type)->cargo_age_period);
+
+		/* Update articulation blocks */
+		ClrBit(u->gv_flags, GVF_ARTICULATION_BLOCK_START);
+		if (articulation_block == 0) {
+			articulation_block = GetVehicleProperty(u, PROP_ROADVEH_ARTICULATION_BLOCK, RoadVehInfo(u->engine_type)->articulation_block);
+			if (articulation_block > 0) SetBit(u->gv_flags, GVF_ARTICULATION_BLOCK_START);
+		}
+		if (articulation_block > 0) {
+			SetBit(u->gv_flags, GVF_ARTICULATION_BLOCK);
+			articulation_block--;
+		} else {
+			ClrBit(u->gv_flags, GVF_ARTICULATION_BLOCK);
+		}
 	}
 
 	uint max_speed = GetVehicleProperty(v, PROP_ROADVEH_SPEED, 0);

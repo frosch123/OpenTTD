@@ -30,6 +30,7 @@ enum PropertyID {
 	PROP_TRAIN_SHORTEN_FACTOR                   = 0x21, ///< Shorter vehicles
 	PROP_TRAIN_USER_DATA                        = 0x25, ///< User defined data for vehicle variable 0x42
 	PROP_TRAIN_CARGO_AGE_PERIOD                 = 0x2B, ///< Number of ticks before carried cargo is aged
+	PROP_TRAIN_ARTICULATION_BLOCK               = 0x2E, ///< Number of articulated parts to form a block
 
 	PROP_ROADVEH_RUNNING_COST_FACTOR            = 0x09, ///< Yearly runningcost
 	PROP_ROADVEH_CARGO_CAPACITY                 = 0x0F, ///< Capacity
@@ -40,6 +41,7 @@ enum PropertyID {
 	PROP_ROADVEH_TRACTIVE_EFFORT                = 0x18, ///< Tractive effort coefficient in 1/256
 	PROP_ROADVEH_CARGO_AGE_PERIOD               = 0x22, ///< Number of ticks before carried cargo is aged
 	PROP_ROADVEH_SHORTEN_FACTOR                 = 0x23, ///< Shorter vehicles
+	PROP_ROADVEH_ARTICULATION_BLOCK             = 0x26, ///< Number of articulated parts to form a block
 
 	PROP_SHIP_COST_FACTOR                       = 0x0A, ///< Purchase cost
 	PROP_SHIP_SPEED                             = 0x0B, ///< Max. speed: 1 unit = 1/3.2 mph = 0.5 km-ish/h

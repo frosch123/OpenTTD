@@ -164,6 +164,7 @@ void Train::ConsistChanged(ConsistChangeFlags allowed_changes)
 		u->InvalidateNewGRFCache();
 	}
 
+	byte articulation_block = 0;
 	for (Train *u = this; u != NULL; u = u->Next()) {
 		const Engine *e_u = u->GetEngine();
 		const RailVehicleInfo *rvi_u = &e_u->u.rail;
@@ -206,6 +207,22 @@ void Train::ConsistChanged(ConsistChangeFlags allowed_changes)
 				uint16 speed = GetVehicleProperty(u, PROP_TRAIN_SPEED, rvi_u->max_speed);
 				if (speed != 0) max_speed = min(speed, max_speed);
 			}
+
+			/* New articulated vehicle, cancel previous articulation block */
+			articulation_block = 0;
+		}
+
+		/* Update articulation blocks */
+		ClrBit(u->gv_flags, GVF_ARTICULATION_BLOCK_START);
+		if (articulation_block == 0) {
+			articulation_block = GetVehicleProperty(u, PROP_TRAIN_ARTICULATION_BLOCK, rvi_u->articulation_block);
+			if (articulation_block > 0) SetBit(u->gv_flags, GVF_ARTICULATION_BLOCK_START);
+		}
+		if (articulation_block > 0) {
+			SetBit(u->gv_flags, GVF_ARTICULATION_BLOCK);
+			articulation_block--;
+		} else {
+			ClrBit(u->gv_flags, GVF_ARTICULATION_BLOCK);
 		}
 
 		uint16 new_cap = e_u->DetermineCapacity(u);
