@@ -10,7 +10,9 @@
 /** @file newgrf_spritegroup.cpp Handling of primarily NewGRF action 2. */
 
 #include "stdafx.h"
+#include <stdarg.h>
 #include "debug.h"
+#include "string_func.h"
 #include "newgrf_spritegroup.h"
 #include "core/pool_func.hpp"
 
@@ -18,6 +20,13 @@ SpriteGroupPool _spritegroup_pool("SpriteGroup");
 INSTANTIATE_POOL_METHODS(SpriteGroup)
 
 TemporaryStorageArray<int32, 0x110> _temp_store;
+
+static const char * const _spritegroup_scope[] = {
+	"self",
+	"parent",
+	"relative",
+};
+assert_compile(lengthof(_spritegroup_scope) == VSG_END);
 
 
 /**
@@ -82,6 +91,18 @@ static inline uint32 GetVariable(const ResolverObject &object, ScopeResolver *sc
 	}
 }
 
+void ResolverTrace::Add(uint spritenum, const char *format, ...)
+{
+	char line[1024];
+
+	va_list va;
+	va_start(va, format);
+	vsnprintf(line, lengthof(line), format, va);
+	va_end(va);
+
+	this->pos += seprintf(this->pos, this->last, this->pos == this->buf ? "%d: %s" : "\n%d: %s", spritenum, line);
+}
+
 ScopeResolver::ScopeResolver(ResolverObject &ro)
 		: ro(ro)
 {
@@ -142,7 +163,7 @@ ScopeResolver::~ScopeResolver() {}
  * @param callback_param2 Second parameter (var 18) of the callback (only used when \a callback is also set).
  */
 ResolverObject::ResolverObject(const GRFFile *grffile, CallbackID callback, uint32 callback_param1, uint32 callback_param2)
-		: default_scope(*this)
+		: default_scope(*this), trace(NULL)
 {
 	this->callback = callback;
 	this->callback_param1 = callback_param1;
@@ -194,7 +215,7 @@ static uint32 RotateRight(uint32 val, uint32 rot)
 /* Evaluate an adjustment for a variable of the given size.
  * U is the unsigned type and S is the signed type to use. */
 template <typename U, typename S>
-static U EvalAdjustT(const DeterministicSpriteGroupAdjust *adjust, ScopeResolver *scope, U last_value, uint32 value)
+static U EvalAdjustT(const DeterministicSpriteGroupAdjust *adjust, ScopeResolver *scope, U last_value, uint32 value, uint &adjusted)
 {
 	value >>= adjust->shift_num;
 	value  &= adjust->and_mask;
@@ -206,6 +227,8 @@ static U EvalAdjustT(const DeterministicSpriteGroupAdjust *adjust, ScopeResolver
 		case DSGA_TYPE_MOD:  value %= (U)adjust->divmod_val; break;
 		case DSGA_TYPE_NONE: break;
 	}
+
+	adjusted = value;
 
 	switch (adjust->operation) {
 		case DSGA_OP_ADD:  return last_value + value;
@@ -244,44 +267,105 @@ const SpriteGroup *DeterministicSpriteGroup::Resolve(ResolverObject &object) con
 
 	ScopeResolver *scope = object.GetScope(this->var_scope);
 
+	if (object.trace != NULL) object.trace->Add(this->spritenum, "Enter VarAction2 (%s)", _spritegroup_scope[this->var_scope]);
+
 	for (i = 0; i < this->num_adjusts; i++) {
 		DeterministicSpriteGroupAdjust *adjust = &this->adjusts[i];
+		uint32 unadjusted;
 
 		/* Try to get the variable. We shall assume it is available, unless told otherwise. */
 		bool available = true;
 		if (adjust->variable == 0x7E) {
+			if (object.trace != NULL) object.trace->Add(this->spritenum, "Enter procedure");
 			const SpriteGroup *subgroup = SpriteGroup::Resolve(adjust->subroutine, object, false);
 			if (subgroup == NULL) {
-				value = CALLBACK_FAILED;
+				unadjusted = CALLBACK_FAILED;
+				if (object.trace != NULL) object.trace->Add(0, "Procedure failed, undefined sprite");
 			} else {
-				value = subgroup->GetCallbackResult();
+				unadjusted = subgroup->GetCallbackResult();
+				if (object.trace != NULL) object.trace->Add(subgroup->spritenum, "Procedure finished");
 			}
 
 			/* Note: 'last_value' and 'reseed' are shared between the main chain and the procedure */
 		} else if (adjust->variable == 0x7B) {
-			value = GetVariable(object, scope, adjust->parameter, last_value, &available);
+			unadjusted = GetVariable(object, scope, adjust->parameter, last_value, &available);
 		} else {
-			value = GetVariable(object, scope, adjust->variable, adjust->parameter, &available);
+			unadjusted = GetVariable(object, scope, adjust->variable, adjust->parameter, &available);
 		}
 
 		if (!available) {
+			if (object.trace != NULL) object.trace->Add(this->spritenum, "Variable %02X: not available, chain to first case", adjust->variable);
+
 			/* Unsupported variable: skip further processing and return either
 			 * the group from the first range or the default group. */
 			return SpriteGroup::Resolve(this->num_ranges > 0 ? this->ranges[0].group : this->default_group, object, false);
 		}
 
+		uint32 adjusted_value;
 		switch (this->size) {
-			case DSG_SIZE_BYTE:  value = EvalAdjustT<uint8,  int8> (adjust, scope, last_value, value); break;
-			case DSG_SIZE_WORD:  value = EvalAdjustT<uint16, int16>(adjust, scope, last_value, value); break;
-			case DSG_SIZE_DWORD: value = EvalAdjustT<uint32, int32>(adjust, scope, last_value, value); break;
+			case DSG_SIZE_BYTE:  value = EvalAdjustT<uint8,  int8> (adjust, scope, last_value, unadjusted, adjusted_value); break;
+			case DSG_SIZE_WORD:  value = EvalAdjustT<uint16, int16>(adjust, scope, last_value, unadjusted, adjusted_value); break;
+			case DSG_SIZE_DWORD: value = EvalAdjustT<uint32, int32>(adjust, scope, last_value, unadjusted, adjusted_value); break;
 			default: NOT_REACHED();
 		}
+
+		if (object.trace != NULL) {
+			uint len;
+			switch (this->size) {
+				case DSG_SIZE_BYTE: len = 2; break;
+				case DSG_SIZE_WORD: len = 4; break;
+				case DSG_SIZE_DWORD: len = 8; break;
+				default: NOT_REACHED();
+			}
+			if (i == 0) {
+				if (adjust->variable >= 0x60 && adjust->variable < 0x7F) {
+					object.trace->Add(spritenum, "%0*X (Variable %02X[%08X]: %08X)", len, adjusted_value, adjust->variable, adjust->parameter, unadjusted);
+				} else {
+					object.trace->Add(spritenum, "%0*X (Variable %02X: %08X)", len, adjusted_value, adjust->variable, unadjusted);
+				}
+			} else {
+				const char *name;
+				switch (adjust->operation) {
+					case DSGA_OP_ADD:  name = "add"; break;
+					case DSGA_OP_SUB:  name = "sub"; break;
+					case DSGA_OP_SMIN: name = "Smin"; break;
+					case DSGA_OP_SMAX: name = "Smax"; break;
+					case DSGA_OP_UMIN: name = "Umin"; break;
+					case DSGA_OP_UMAX: name = "Umax"; break;
+					case DSGA_OP_SDIV: name = "Sdiv"; break;
+					case DSGA_OP_SMOD: name = "Smod"; break;
+					case DSGA_OP_UDIV: name = "Udiv"; break;
+					case DSGA_OP_UMOD: name = "Umod"; break;
+					case DSGA_OP_MUL:  name = "mul"; break;
+					case DSGA_OP_AND:  name = "and"; break;
+					case DSGA_OP_OR:   name = "or"; break;
+					case DSGA_OP_XOR:  name = "xor"; break;
+					case DSGA_OP_STO:  name = "Tsto"; break;
+					case DSGA_OP_RST:  name = "reset"; break;
+					case DSGA_OP_STOP: name = "Psto"; break;
+					case DSGA_OP_ROR:  name = "ror"; break;
+					case DSGA_OP_SCMP: name = "Scmp"; break;
+					case DSGA_OP_UCMP: name = "Ucmp"; break;
+					case DSGA_OP_SHL:  name = "shl"; break;
+					case DSGA_OP_SHR:  name = "shr"; break;
+					case DSGA_OP_SAR:  name = "sar"; break;
+					default:           name = "UNKNOWN"; break;
+				}
+				if (adjust->variable >= 0x60 && adjust->variable < 0x7F) {
+					object.trace->Add(spritenum, "%0*X <- %s %0*X (Variable %02X[%08X]: %08X)", len, value, name, len, adjusted_value, adjust->variable, adjust->parameter, unadjusted);
+				} else {
+					object.trace->Add(spritenum, "%0*X <- %s %0*X (Variable %02X: %08X)", len, value, name, len, adjusted_value, adjust->variable, unadjusted);
+				}
+			}
+		}
+
 		last_value = value;
 	}
 
 	object.last_value = last_value;
 
 	if (this->num_ranges == 0) {
+		if (object.trace != NULL) object.trace->Add(this->spritenum, "Return computed result");
 		/* nvar == 0 is a special case -- we turn our value into a callback result */
 		if (value != CALLBACK_FAILED) value = GB(value, 0, 15);
 		static CallbackResultSpriteGroup nvarzero(0, 0, true);
@@ -292,10 +376,12 @@ const SpriteGroup *DeterministicSpriteGroup::Resolve(ResolverObject &object) con
 
 	for (i = 0; i < this->num_ranges; i++) {
 		if (this->ranges[i].low <= value && value <= this->ranges[i].high) {
+			if (object.trace != NULL) object.trace->Add(this->spritenum, "Chain to range %u", i);
 			return SpriteGroup::Resolve(this->ranges[i].group, object, false);
 		}
 	}
 
+	if (object.trace != NULL) object.trace->Add(this->spritenum, "Chain to default");
 	return SpriteGroup::Resolve(this->default_group, object, false);
 }
 
@@ -303,6 +389,9 @@ const SpriteGroup *DeterministicSpriteGroup::Resolve(ResolverObject &object) con
 const SpriteGroup *RandomizedSpriteGroup::Resolve(ResolverObject &object) const
 {
 	ScopeResolver *scope = object.GetScope(this->var_scope, this->count);
+
+	if (object.trace != NULL) object.trace->Add(this->spritenum, "Enter RandomAction2 (%s)", _spritegroup_scope[this->var_scope]);
+
 	if (object.trigger != 0) {
 		/* Handle triggers */
 		/* Magic code that may or may not do the right things... */
@@ -311,9 +400,11 @@ const SpriteGroup *RandomizedSpriteGroup::Resolve(ResolverObject &object) const
 		bool res = (this->cmp_mode == RSG_CMP_ANY) ? (match != 0) : (match == this->triggers);
 
 		if (res) {
+			if (object.trace != NULL) object.trace->Add(this->spritenum, "Triggers match");
 			waiting_triggers &= ~match;
 			object.reseed[this->var_scope] |= (this->num_groups - 1) << this->lowest_randbit;
 		} else {
+			if (object.trace != NULL) object.trace->Add(this->spritenum, "Triggers do not match");
 			waiting_triggers |= object.trigger;
 		}
 
@@ -323,6 +414,7 @@ const SpriteGroup *RandomizedSpriteGroup::Resolve(ResolverObject &object) const
 	uint32 mask  = (this->num_groups - 1) << this->lowest_randbit;
 	byte index = (scope->GetRandomBits() & mask) >> this->lowest_randbit;
 
+	if (object.trace != NULL) object.trace->Add(this->spritenum, "Chain to case %u", index);
 	return SpriteGroup::Resolve(this->groups[index], object, false);
 }
 

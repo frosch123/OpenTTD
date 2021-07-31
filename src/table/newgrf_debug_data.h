@@ -86,11 +86,11 @@ class NIHVehicle : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		Vehicle *v = Vehicle::Get(index);
 		VehicleResolverObject ro(v->engine_type, v, VehicleResolverObject::WO_CACHED);
-		NIHelper::ResolveCB(ro, cb, param, result);
+		NIHelper::ResolveCB(ro, cb, param, result, trace);
 	}
 };
 
@@ -156,10 +156,10 @@ class NIHStation : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		StationResolverObject ro(GetStationSpec(index), Station::GetByTile(index), index);
-		NIHelper::ResolveCB(ro, cb, param, result);
+		NIHelper::ResolveCB(ro, cb, param, result, trace);
 	}
 };
 
@@ -228,10 +228,10 @@ class NIHHouse : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		HouseResolverObject ro(GetHouseType(index), index, Town::GetByTile(index));
-		NIHelper::ResolveCB(ro, cb, param, result);
+		NIHelper::ResolveCB(ro, cb, param, result, trace);
 	}
 };
 
@@ -285,10 +285,10 @@ class NIHIndustryTile : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		IndustryTileResolverObject ro(GetIndustryGfx(index), index, Industry::GetByTile(index));
-		NIHelper::ResolveCB(ro, cb, param, result);
+		NIHelper::ResolveCB(ro, cb, param, result, trace);
 	}
 };
 
@@ -364,11 +364,11 @@ class NIHIndustry : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		Industry *i = Industry::Get(index);
 		IndustriesResolverObject ro(i->location.tile, i, i->type);
-		NIHelper::ResolveCB(ro, cb, param, result);
+		NIHelper::ResolveCB(ro, cb, param, result, trace);
 	}
 
 	uint GetPSASize(uint index, uint32 grfid) const      { return cpp_lengthof(PersistentStorage, storage); }
@@ -435,10 +435,10 @@ class NIHObject : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		ObjectResolverObject ro(ObjectSpec::GetByTile(index), Object::GetByTile(index), index);
-		NIHelper::ResolveCB(ro, cb, param, result);
+		NIHelper::ResolveCB(ro, cb, param, result, trace);
 	}
 };
 
@@ -477,7 +477,7 @@ class NIHRailType : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		NOT_REACHED();
 	}
@@ -516,10 +516,10 @@ class NIHAirportTile : public NIHelper {
 		return NIHelper::Resolve(ro.GetScope(VSG_SCOPE_SELF), var, param, avail);
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		AirportTileResolverObject ro(AirportTileSpec::GetByTile(index), index, Station::GetByTile(index));
-		NIHelper::ResolveCB(ro, cb, param, result);
+		NIHelper::ResolveCB(ro, cb, param, result, trace);
 	}
 };
 
@@ -574,7 +574,7 @@ class NIHTown : public NIHelper {
 		return NULL;
 	}
 
-	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	/* virtual */ void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result, ResolverTrace *trace) const
 	{
 		NOT_REACHED();
 	}

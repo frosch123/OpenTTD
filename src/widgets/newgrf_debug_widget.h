@@ -25,6 +25,8 @@ enum NewGRFInspectWidgets {
 	WID_NGRFI_PARAM_LABEL   = WID_NGRFI_PARAM_SEL   + 0x14, ///< Parameter labels.
 	WID_NGRFI_PARAM_EDIT    = WID_NGRFI_PARAM_LABEL + 0x14, ///< Parameter editboxes.
 	WID_NGRFI_RESULT        = WID_NGRFI_PARAM_EDIT  + 0x14, ///< Callback result
+	WID_NGRFI_TRACE,            ///< Trace display.
+	WID_NGRFI_TRACE_SCROLLBAR,  ///< Trace scrollbar.
 };
 
 /** Widgets of the #SpriteAlignerWindow class. */

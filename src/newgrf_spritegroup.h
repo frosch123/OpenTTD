@@ -294,6 +294,20 @@ struct IndustryProductionSpriteGroup : SpriteGroup {
 	uint8 again;
 };
 
+/** Container for the result of tracing a spritegroup resolving. */
+struct ResolverTrace {
+	char *buf;
+	char *pos;
+	char *last;
+
+	ResolverTrace(char *buf, char *last) : buf(buf), pos(buf), last(last)
+	{
+		*pos = '\0';
+	}
+
+	void WARN_FORMAT(3, 4) Add(uint spritenum, const char *format, ...);
+};
+
 /**
  * Interface to query and set values specific to a single #VarSpriteGroupScope (action 2 scope).
  *
@@ -332,6 +346,8 @@ struct ResolverObject {
 
 	byte trigger;
 
+	ResolverTrace *trace;       ///< Trace resolving.
+
 	uint32 last_value;          ///< Result of most recent DeterministicSpriteGroup (including procedure calls)
 	uint32 reseed[VSG_END];     ///< Collects bits to rerandomise while triggering triggers.
 
@@ -344,7 +360,15 @@ struct ResolverObject {
 	 */
 	const SpriteGroup *Resolve()
 	{
-		return SpriteGroup::Resolve(this->root_spritegroup, *this);
+		const SpriteGroup *result = SpriteGroup::Resolve(this->root_spritegroup, *this);
+		if (this->trace != NULL) {
+			if (result == NULL) {
+				this->trace->Add(0, "Undefined sprite");
+			} else {
+				this->trace->Add(result->spritenum, "Finished chain");
+			}
+		}
+		return result;
 	}
 
 	/**
