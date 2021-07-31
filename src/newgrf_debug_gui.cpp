@@ -18,6 +18,7 @@
 #include "string_func.h"
 #include "strings_func.h"
 #include "textbuf_gui.h"
+#include "querystring_gui.h"
 #include "vehicle_gui.h"
 
 #include "engine_base.h"
@@ -84,6 +85,9 @@ enum NIParameter {
 	NIP_END      = NIP_REG100 + 0x10
 };
 DECLARE_POSTFIX_INCREMENT(NIParameter)
+assert_compile(WID_NGRFI_PARAM_LABEL == WID_NGRFI_PARAM_SEL   + NIP_END);
+assert_compile(WID_NGRFI_PARAM_EDIT  == WID_NGRFI_PARAM_LABEL + NIP_END);
+assert_compile(WID_NGRFI_END         == WID_NGRFI_PARAM_EDIT  + NIP_END);
 
 /**
  * Bitset of NIParameter.
@@ -97,6 +101,27 @@ enum NIParameterBits {
 	NIP_BIT_REG10F = 1U << NIP_REG10F,
 };
 DECLARE_ENUM_AS_BIT_SET(NIParameterBits)
+
+static const char * const _newgrf_parameter_names[] = {
+	"60+x parameter",
+	"Register 100",
+	"Register 101",
+	"Register 102",
+	"Register 103",
+	"Register 104",
+	"Register 105",
+	"Register 106",
+	"Register 107",
+	"Register 108",
+	"Register 109",
+	"Register 10A",
+	"Register 10B",
+	"Register 10C",
+	"Register 10D",
+	"Register 10E",
+	"Register 10F",
+};
+assert_compile(lengthof(_newgrf_parameter_names) == NIP_END);
 
 /**
  * The type of a property to show. This is used to
@@ -337,6 +362,7 @@ struct NewGRFInspectWindow : Window {
 	byte current_edit_param;
 
 	Scrollbar *vscroll;
+	QueryString *editboxes[NIP_END];   ///< Editboxes for parameters
 
 	/**
 	 * Set the GRFID of the item opening this window.
@@ -391,6 +417,13 @@ struct NewGRFInspectWindow : Window {
 	{
 		this->CreateNestedTree();
 		this->vscroll = this->GetScrollbar(WID_NGRFI_SCROLLBAR);
+		this->vscroll->SetStepSize(FONT_HEIGHT_NORMAL);
+		for (NIParameter i = NIP_BEGIN; i != NIP_END; i++) {
+			this->querystrings[WID_NGRFI_PARAM_EDIT + i] = this->editboxes[i] = new QueryString(9);
+			this->editboxes[i]->text.afilter = CS_HEXADECIMAL;
+			this->DisableWidget(WID_NGRFI_PARAM_EDIT + i);
+			this->GetWidget<NWidgetStacked>(WID_NGRFI_PARAM_SEL + i)->SetDisplayedPlane(SZSP_HORIZONTAL);
+		}
 		this->FinishInitNested(wno);
 
 		this->vscroll->SetCount(0);
@@ -399,8 +432,20 @@ struct NewGRFInspectWindow : Window {
 		this->OnInvalidateData(0, true);
 	}
 
+	~NewGRFInspectWindow()
+	{
+		for (NIParameter i = NIP_BEGIN; i != NIP_END; i++) {
+			delete this->editboxes[i];
+		}
+	}
+
 	virtual void SetStringParameters(int widget) const
 	{
+		if (IsInsideBS(widget, WID_NGRFI_PARAM_LABEL, NIP_END)) {
+			SetDParamStr(0, _newgrf_parameter_names[widget - WID_NGRFI_PARAM_LABEL]);
+			return;
+		}
+
 		if (widget != WID_NGRFI_CAPTION) return;
 
 		GetFeatureHelper(this->window_number)->SetStringParameters(this->GetFeatureIndex());
@@ -417,10 +462,10 @@ struct NewGRFInspectWindow : Window {
 			}
 
 			case WID_NGRFI_MAINPANEL:
-				resize->height = max(11, FONT_HEIGHT_NORMAL + 1);
+				resize->height = 1;
 				resize->width  = 1;
 
-				size->height = 5 * resize->height + TOP_OFFSET + BOTTOM_OFFSET;
+				size->height = 5 * FONT_HEIGHT_NORMAL + TOP_OFFSET + BOTTOM_OFFSET;
 				break;
 		}
 	}
@@ -429,9 +474,10 @@ struct NewGRFInspectWindow : Window {
 	 * Helper function to draw a string (line) in the window.
 	 * @param r      The (screen) rectangle we must draw within
 	 * @param offset The offset (in lines) we want to draw for
+	 * @param selected Whether the line is selected
 	 * @param format The format string
 	 */
-	void WARN_FORMAT(4, 5) DrawString(const Rect &r, int offset, const char *format, ...) const
+	void WARN_FORMAT(5, 6) DrawString(const Rect &r, int offset, bool selected, const char *format, ...) const
 	{
 		char buf[1024];
 
@@ -440,10 +486,11 @@ struct NewGRFInspectWindow : Window {
 		vsnprintf(buf, lengthof(buf), format, va);
 		va_end(va);
 
+		offset *= FONT_HEIGHT_NORMAL;
 		offset -= this->vscroll->GetPosition();
 		if (offset < 0 || offset >= this->vscroll->GetCapacity()) return;
 
-		::DrawString(r.left + LEFT_OFFSET, r.right - RIGHT_OFFSET, r.top + TOP_OFFSET + (offset * this->resize.step_height), buf, TC_BLACK);
+		::DrawString(r.left + LEFT_OFFSET, r.right - RIGHT_OFFSET, r.top + TOP_OFFSET + offset, buf, selected ? TC_WHITE : TC_BLACK);
 	}
 
 	virtual void DrawWidget(const Rect &r, int widget) const
@@ -496,7 +543,7 @@ struct NewGRFInspectWindow : Window {
 
 		uint i = 0;
 		if (nif->variables != NULL) {
-			this->DrawString(r, i++, "Variables:");
+			this->DrawString(r, i++, false, "Variables:");
 			for (const NIVariable *niv = nif->variables; niv->name != NULL; niv++) {
 				bool avail = true;
 				NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][niv->var];
@@ -518,9 +565,9 @@ struct NewGRFInspectWindow : Window {
 						if (pos != paramstr) pos += seprintf(pos, lastof(paramstr), ", ");
 						pos += seprintf(pos, lastof(paramstr), "%08x", param[p]);
 					}
-					this->DrawString(r, i++, "  %02x[%s]: %s (%s)", niv->var, paramstr, valuestr, niv->name);
+					this->DrawString(r, i++, this->current_edit_param == niv->var, "  %02x[%s]: %s (%s)", niv->var, paramstr, valuestr, niv->name);
 				} else {
-					this->DrawString(r, i++, "  %02x: %s (%s)", niv->var, valuestr, niv->name);
+					this->DrawString(r, i++, this->current_edit_param == niv->var, "  %02x: %s (%s)", niv->var, valuestr, niv->name);
 				}
 			}
 		}
@@ -529,18 +576,18 @@ struct NewGRFInspectWindow : Window {
 		const int32 *psa = nih->GetPSAFirstPosition(index, this->caller_grfid);
 		if (psa_size != 0 && psa != NULL) {
 			if (nih->PSAWithParameter()) {
-				this->DrawString(r, i++, "Persistent storage [%08X]:", BSWAP32(this->caller_grfid));
+				this->DrawString(r, i++, false, "Persistent storage [%08X]:", BSWAP32(this->caller_grfid));
 			} else {
-				this->DrawString(r, i++, "Persistent storage:");
+				this->DrawString(r, i++, false, "Persistent storage:");
 			}
 			assert(psa_size % 4 == 0);
 			for (uint j = 0; j < psa_size; j += 4, psa += 4) {
-				this->DrawString(r, i++, "  %i: %i %i %i %i", j, psa[0], psa[1], psa[2], psa[3]);
+				this->DrawString(r, i++, false, "  %i: %i %i %i %i", j, psa[0], psa[1], psa[2], psa[3]);
 			}
 		}
 
 		if (nif->properties != NULL) {
-			this->DrawString(r, i++, "Properties:");
+			this->DrawString(r, i++, false, "Properties:");
 			for (const NIProperty *nip = nif->properties; nip->name != NULL; nip++) {
 				const void *ptr = (const byte *)base + nip->offset;
 				uint value;
@@ -568,12 +615,12 @@ struct NewGRFInspectWindow : Window {
 
 				char buffer[64];
 				GetString(buffer, string, lastof(buffer));
-				this->DrawString(r, i++, "  %02x: %s (%s)", nip->prop, buffer, nip->name);
+				this->DrawString(r, i++, false, "  %02x: %s (%s)", nip->prop, buffer, nip->name);
 			}
 		}
 
 		if (nif->callbacks != NULL) {
-			this->DrawString(r, i++, "Callbacks:");
+			this->DrawString(r, i++, false, "Callbacks:");
 			for (const NICallback *nic = nif->callbacks; nic->name != NULL; nic++) {
 				if (nic->cb_bit != CBM_NO_BIT) {
 					const void *ptr = (const byte *)base_spec + nic->offset;
@@ -586,9 +633,9 @@ struct NewGRFInspectWindow : Window {
 					}
 
 					if (!HasBit(value, nic->cb_bit)) continue;
-					this->DrawString(r, i++, "  %03x: %s", nic->cb_id, nic->name);
+					this->DrawString(r, i++, false, "  %03x: %s", nic->cb_id, nic->name);
 				} else {
-					this->DrawString(r, i++, "  %03x: %s (unmasked)", nic->cb_id, nic->name);
+					this->DrawString(r, i++, false, "  %03x: %s (unmasked)", nic->cb_id, nic->name);
 				}
 			}
 		}
@@ -596,7 +643,7 @@ struct NewGRFInspectWindow : Window {
 		/* Not nice and certainly a hack, but it beats duplicating
 		 * this whole function just to count the actual number of
 		 * elements. Especially because they need to be redrawn. */
-		const_cast<NewGRFInspectWindow*>(this)->vscroll->SetCount(i);
+		const_cast<NewGRFInspectWindow*>(this)->vscroll->SetCount(i * FONT_HEIGHT_NORMAL);
 	}
 
 	virtual void OnClick(Point pt, int widget, int click_count)
@@ -635,26 +682,38 @@ struct NewGRFInspectWindow : Window {
 				/* Get the line, make sure it's within the boundaries. */
 				int line = this->vscroll->GetScrolledRowFromWidget(pt.y, this, WID_NGRFI_MAINPANEL, TOP_OFFSET);
 				if (line == INT_MAX) return;
+				line /= FONT_HEIGHT_NORMAL;
 
 				/* Find the variable related to the line */
 				for (const NIVariable *niv = nif->variables; niv->name != NULL; niv++, line--) {
 					if (line != 1) continue; // 1 because of the "Variables:" line
 
-					if (niv->params != NIP_BIT_NONE) {
-						this->current_edit_param = niv->var;
-						ShowQueryString(STR_EMPTY, STR_NEWGRF_INSPECT_QUERY_CAPTION, 9, this, CS_HEXADECIMAL, QSF_NONE);
+					this->current_edit_param = niv->var;
+					NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][niv->var];
+					for (NIParameter i = NIP_BEGIN; i != NIP_END; i++) {
+						bool active = HasBit(niv->params, i);
+						this->SetWidgetDisabledState(WID_NGRFI_PARAM_EDIT + i, !active);
+						this->GetWidget<NWidgetStacked>(WID_NGRFI_PARAM_SEL + i)->SetDisplayedPlane(active ? 0 : SZSP_HORIZONTAL);
+						if (active) {
+							char buf[16];
+							snprintf(buf, sizeof(buf), "%08x", param[i]);
+							this->editboxes[i]->text.Assign(buf);
+						}
 					}
 					break;
 				}
+				this->ReInit();
+				break;
 			}
 		}
 	}
 
-	virtual void OnQueryTextFinished(char *str)
+	virtual void OnEditboxChanged(int widget)
 	{
-		if (StrEmpty(str)) return;
+		if (!IsInsideBS(widget, WID_NGRFI_PARAM_EDIT, NIP_END)) return;
 
-		NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][this->current_edit_param][NIP_VAR60] = strtol(str, NULL, 16); // TODO
+		const char *str = this->editboxes[widget - WID_NGRFI_PARAM_EDIT]->text.buf;
+		NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][this->current_edit_param][widget - WID_NGRFI_PARAM_EDIT] = strtol(str, NULL, 16);
 		this->SetDirty();
 	}
 
@@ -682,6 +741,14 @@ struct NewGRFInspectWindow : Window {
 
 /* static */ NIParameters NewGRFInspectWindow::varparams[GSF_FAKE_END][0x100] = { }; // Use spec to have 0s in whole array
 
+#define NWID_PARAMETER_ROW(nip) \
+	NWidget(NWID_SELECTION, INVALID_COLOUR, WID_NGRFI_PARAM_SEL + (nip)), \
+		NWidget(NWID_HORIZONTAL, NC_EQUALSIZE), SetPIP(WD_FRAMERECT_LEFT, 0, 0), \
+			NWidget(WWT_TEXT, COLOUR_GREY, WID_NGRFI_PARAM_LABEL + (nip)), SetDataTip(STR_BLACK_RAW_STRING, STR_NULL), SetFill(1, 0), SetResize(1, 0), \
+			NWidget(WWT_EDITBOX, COLOUR_GREY, WID_NGRFI_PARAM_EDIT + (nip)), SetFill(1, 0), SetResize(1, 0), \
+		EndContainer(), \
+	EndContainer()
+
 static const NWidgetPart _nested_newgrf_inspect_chain_widgets[] = {
 	NWidget(NWID_HORIZONTAL),
 		NWidget(WWT_CLOSEBOX, COLOUR_GREY),
@@ -699,8 +766,30 @@ static const NWidgetPart _nested_newgrf_inspect_chain_widgets[] = {
 	EndContainer(),
 	NWidget(NWID_HORIZONTAL),
 		NWidget(WWT_PANEL, COLOUR_GREY, WID_NGRFI_MAINPANEL), SetMinimalSize(300, 0), SetScrollbar(WID_NGRFI_SCROLLBAR), EndContainer(),
-		NWidget(NWID_VERTICAL),
-			NWidget(NWID_VSCROLLBAR, COLOUR_GREY, WID_NGRFI_SCROLLBAR),
+		NWidget(NWID_VSCROLLBAR, COLOUR_GREY, WID_NGRFI_SCROLLBAR),
+	EndContainer(),
+	NWidget(NWID_HORIZONTAL),
+		NWidget(WWT_PANEL, COLOUR_GREY),
+			NWID_PARAMETER_ROW(NIP_VAR60),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x03),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x04),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x05),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x06),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x07),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x08),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x09),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0A),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0B),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0C),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0D),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0E),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0F),
+		EndContainer(),
+		NWidget(WWT_PANEL, COLOUR_GREY),
+			NWidget(NWID_SPACER), SetFill(0, 1),
 			NWidget(WWT_RESIZEBOX, COLOUR_GREY),
 		EndContainer(),
 	EndContainer(),
@@ -717,8 +806,30 @@ static const NWidgetPart _nested_newgrf_inspect_widgets[] = {
 	EndContainer(),
 	NWidget(NWID_HORIZONTAL),
 		NWidget(WWT_PANEL, COLOUR_GREY, WID_NGRFI_MAINPANEL), SetMinimalSize(300, 0), SetScrollbar(WID_NGRFI_SCROLLBAR), EndContainer(),
-		NWidget(NWID_VERTICAL),
-			NWidget(NWID_VSCROLLBAR, COLOUR_GREY, WID_NGRFI_SCROLLBAR),
+		NWidget(NWID_VSCROLLBAR, COLOUR_GREY, WID_NGRFI_SCROLLBAR),
+	EndContainer(),
+	NWidget(NWID_HORIZONTAL),
+		NWidget(WWT_PANEL, COLOUR_GREY),
+			NWID_PARAMETER_ROW(NIP_VAR60),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x03),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x04),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x05),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x06),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x07),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x08),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x09),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0A),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0B),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0C),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0D),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0E),
+			NWID_PARAMETER_ROW(NIP_REG100 + 0x0F),
+		EndContainer(),
+		NWidget(WWT_PANEL, COLOUR_GREY),
+			NWidget(NWID_SPACER), SetFill(0, 1),
 			NWidget(WWT_RESIZEBOX, COLOUR_GREY),
 		EndContainer(),
 	EndContainer(),
