@@ -30,6 +30,7 @@
 
 #define NICV(cb_id, bit, param, result) NIC(cb_id, Engine, info.callback_mask, bit, param, result)
 static const NICallback _nic_vehicles[] = {
+	NICV(CBID_RANDOM_TRIGGER,                CBM_NO_BIT,                 NIP_BIT_TRIGGER,               NICBR_BIT_RESEED_SUM),
 	NICV(CBID_VEHICLE_VISUAL_EFFECT,         CBM_VEHICLE_VISUAL_EFFECT,  NIP_BIT_NONE,                  NICBR_BIT_RESULT),
 	NICV(CBID_VEHICLE_LENGTH,                CBM_VEHICLE_LENGTH,         NIP_BIT_NONE,                  NICBR_BIT_RESULT),
 	NICV(CBID_VEHICLE_LOAD_AMOUNT,           CBM_VEHICLE_LOAD_AMOUNT,    NIP_BIT_NONE,                  NICBR_BIT_RESULT),
@@ -105,6 +106,7 @@ static const NIFeature _nif_vehicle = {
 
 #define NICS(cb_id, bit, param, result) NIC(cb_id, StationSpec, callback_mask, bit, param, result)
 static const NICallback _nic_stations[] = {
+	NICS(CBID_RANDOM_TRIGGER,           CBM_NO_BIT,                       NIP_BIT_TRIGGER,               NICBR_BIT_RESEED_SUM),
 	NICS(CBID_STATION_AVAILABILITY,     CBM_STATION_AVAIL,                NIP_BIT_NONE,                  NICBR_BIT_RESULT),
 	NICS(CBID_STATION_SPRITE_LAYOUT,    CBM_STATION_SPRITE_LAYOUT,        NIP_BIT_NONE,                  NICBR_BIT_RESULT),
 	NICS(CBID_STATION_TILE_LAYOUT,      CBM_NO_BIT,                       NIP_BIT_VAR10,                 NICBR_BIT_RESULT),
@@ -173,6 +175,7 @@ static const NIFeature _nif_station = {
 
 #define NICH(cb_id, bit, param, result) NIC(cb_id, HouseSpec, callback_mask, bit, param, result)
 static const NICallback _nic_house[] = {
+	NICH(CBID_RANDOM_TRIGGER,                  CBM_NO_BIT,                          NIP_BIT_TRIGGER,               NICBR_BIT_RESEED_SUM),
 	NICH(CBID_HOUSE_ALLOW_CONSTRUCTION,        CBM_HOUSE_ALLOW_CONSTRUCTION,        NIP_BIT_NONE,                  NICBR_BIT_RESULT),
 	NICH(CBID_HOUSE_ANIMATION_NEXT_FRAME,      CBM_HOUSE_ANIMATION_NEXT_FRAME,      NIP_BIT_VAR10,                 NICBR_BIT_RESULT),
 	NICH(CBID_HOUSE_ANIMATION_START_STOP,      CBM_HOUSE_ANIMATION_START_STOP,      NIP_BIT_VAR10,                 NICBR_BIT_RESULT),
@@ -244,6 +247,7 @@ static const NIFeature _nif_house = {
 
 #define NICIT(cb_id, bit, param, result) NIC(cb_id, IndustryTileSpec, callback_mask, bit, param, result)
 static const NICallback _nic_industrytiles[] = {
+	NICIT(CBID_RANDOM_TRIGGER,           CBM_NO_BIT,                NIP_BIT_TRIGGER,               NICBR_BIT_RESEED_SELF | NICBR_BIT_RESEED_PARENT),
 	NICIT(CBID_INDTILE_ANIM_START_STOP,  CBM_NO_BIT,                NIP_BIT_VAR10 | NIP_BIT_VAR18, NICBR_BIT_RESULT),
 	NICIT(CBID_INDTILE_ANIM_NEXT_FRAME,  CBM_INDT_ANIM_NEXT_FRAME,  NIP_BIT_VAR10,                 NICBR_BIT_RESULT),
 	NICIT(CBID_INDTILE_ANIMATION_SPEED,  CBM_INDT_ANIM_SPEED,       NIP_BIT_NONE,                  NICBR_BIT_RESULT),

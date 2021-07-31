@@ -79,6 +79,7 @@ enum NIParameter {
 	NIP_VAR60    = NIP_BEGIN,           ///< Var 60+x parameter.
 	NIP_VAR10,                          ///< Callback info 1.
 	NIP_VAR18,                          ///< Callback info 2.
+	NIP_TRIGGER,                        ///< Random triggers.
 	NIP_REG100,                         ///< Temporary storage register 100 to 10F.
 	NIP_REG101   = NIP_REG100 + 0x01,
 	NIP_REG10E   = NIP_REG100 + 0x0E,
@@ -99,6 +100,7 @@ enum NIParameterBits {
 	NIP_BIT_VAR60  = 1U << NIP_VAR60,   ///< Var 60+x paramter
 	NIP_BIT_VAR10  = 1U << NIP_VAR10,   ///< Callback info 1.
 	NIP_BIT_VAR18  = 1U << NIP_VAR18,   ///< Callback info 2.
+	NIP_BIT_TRIGGER= 1U << NIP_TRIGGER, ///< Random triggers.
 	NIP_BIT_REG100 = 1U << NIP_REG100,  ///< Temporary storage register 100.
 	NIP_BIT_REG101 = 1U << NIP_REG101,
 	NIP_BIT_REG10E = 1U << NIP_REG10E,
@@ -110,6 +112,7 @@ static const char * const _newgrf_parameter_names[] = {
 	"60+x parameter",
 	"Variable 10",
 	"Variable 18",
+	"Triggers",
 	"Register 100",
 	"Register 101",
 	"Register 102",
@@ -136,6 +139,9 @@ enum NICBResult {
 	NICBR_BEGIN,
 
 	NICBR_RESULT   = NICBR_BEGIN,         ///< Normal callback result.
+	NICBR_RESEED_SUM,                     ///< Random reseed (self +  parent).
+	NICBR_RESEED_SELF,                    ///< Random reseed (self scope).
+	NICBR_RESEED_PARENT,                  ///< Random reseed (parent scope).
 	NICBR_REG100,                         ///< Temporary storage register 100 to 10F.
 
 	NICBR_END      = NICBR_REG100 + 0x10
@@ -149,6 +155,9 @@ DECLARE_POSTFIX_INCREMENT(NICBResult)
 enum NICBResultBits {
 	NICBR_BIT_NONE       = 0U,
 	NICBR_BIT_RESULT     = 1U << NICBR_RESULT,    ///< Normal callback result.
+	NICBR_BIT_RESEED_SUM    = 1U << NICBR_RESEED_SUM,    ///< Random reseed (self + parent).
+	NICBR_BIT_RESEED_SELF   = 1U << NICBR_RESEED_SELF,   ///< Random reseed (self scope).
+	NICBR_BIT_RESEED_PARENT = 1U << NICBR_RESEED_PARENT, ///< Random reseed (parent scope).
 	NICBR_BIT_REG100     = 1U << NICBR_REG100,    ///< Temporary storage register 100.
 	NICBR_BIT_TEXTSTACK4 = 0x0FU << NICBR_REG100, ///< 4 register textstack 100..103
 	NICBR_BIT_TEXTSTACK6 = 0x3FU << NICBR_REG100, ///< 6 register textstack 100..105
@@ -157,6 +166,9 @@ DECLARE_ENUM_AS_BIT_SET(NICBResultBits)
 
 static const char * const _newgrf_cbresult_names[] = {
 	"Result",
+	"Reseed bits",
+	"Reseed bits (self)",
+	"Reseed bits (parent)",
 	"Register 100",
 	"Register 101",
 	"Register 102",
@@ -317,7 +329,11 @@ public:
 		ro.callback = cb;
 		ro.callback_param1 = param[NIP_VAR10];
 		ro.callback_param2 = param[NIP_VAR18];
+		ro.trigger = param[NIP_TRIGGER];
 		result[NICBR_RESULT] = ro.ResolveCallback();
+		result[NICBR_RESEED_SELF] = ro.reseed[VSG_SCOPE_SELF];
+		result[NICBR_RESEED_PARENT] = ro.reseed[VSG_SCOPE_PARENT];
+		result[NICBR_RESEED_SUM] = ro.GetReseedSum();
 		for (uint i = 0; i <= 0x0F; i++) {
 			result[NICBR_REG100 + i] = GetRegister(0x100 + i);
 		}
@@ -740,7 +756,13 @@ struct NewGRFInspectWindow : Window {
 				nih->ResolveCB(index, (CallbackID)nic->cb_id, param, results);
 				char valuestr[32];
 				if (!HasBit(nic->results, NICBR_RESULT)) {
-					valuestr[0] = '\0';
+					if (HasBit(nic->results, NICBR_RESEED_SUM)) {
+						seprintf(valuestr, lastof(valuestr), "%04x", results[NICBR_RESEED_SUM]);
+					} else if (HasBit(nic->results, NICBR_RESEED_SELF) && HasBit(nic->results, NICBR_RESEED_PARENT)) {
+						seprintf(valuestr, lastof(valuestr), "%04x, %04X", results[NICBR_RESEED_SELF], results[NICBR_RESEED_PARENT]);
+					} else {
+						valuestr[0] = '\0';
+					}
 				} else if (results[NICBR_RESULT] != CALLBACK_FAILED) {
 					seprintf(valuestr, lastof(valuestr), "%08x", results[NICBR_RESULT]);
 				} else {
@@ -970,6 +992,7 @@ static const NWidgetPart _nested_newgrf_inspect_chain_widgets[] = {
 				NWID_PARAMETER_ROW(NIP_VAR60),
 				NWID_PARAMETER_ROW(NIP_VAR10),
 				NWID_PARAMETER_ROW(NIP_VAR18),
+				NWID_PARAMETER_ROW(NIP_TRIGGER),
 				NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
 				NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
 				NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
@@ -1016,6 +1039,7 @@ static const NWidgetPart _nested_newgrf_inspect_widgets[] = {
 				NWID_PARAMETER_ROW(NIP_VAR60),
 				NWID_PARAMETER_ROW(NIP_VAR10),
 				NWID_PARAMETER_ROW(NIP_VAR18),
+				NWID_PARAMETER_ROW(NIP_TRIGGER),
 				NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
 				NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
 				NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
