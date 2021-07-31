@@ -33,6 +33,18 @@ static inline uint32 GetRegister(uint i)
 	return _temp_store.GetValue(i);
 }
 
+/**
+ * Store a value in a so-called newgrf "register".
+ * @param i index of the register
+ * @param value Value to store
+ * @pre i < 0x110
+ */
+static inline void SetRegister(uint i, uint32 value)
+{
+	extern TemporaryStorageArray<int32, 0x110> _temp_store;
+	_temp_store.StoreValue(i, value);
+}
+
 /* List of different sprite group types */
 enum SpriteGroupType {
 	SGT_REAL,

@@ -70,6 +70,35 @@ static inline uint GetInspectWindowNumber(GrfSpecFeature feature, uint index)
 }
 
 /**
+ * Parameters to stuff in the inspect window.
+ */
+enum NIParameter {
+	NIP_BEGIN    = 0,
+
+	NIP_VAR60    = NIP_BEGIN,           ///< Var 60+x parameter.
+	NIP_REG100,                         ///< Temporary storage register 100 to 10F.
+	NIP_REG101   = NIP_REG100 + 0x01,
+	NIP_REG10E   = NIP_REG100 + 0x0E,
+	NIP_REG10F   = NIP_REG100 + 0x0F,
+
+	NIP_END      = NIP_REG100 + 0x10
+};
+DECLARE_POSTFIX_INCREMENT(NIParameter)
+
+/**
+ * Bitset of NIParameter.
+ */
+enum NIParameterBits {
+	NIP_BIT_NONE   = 0U,
+	NIP_BIT_VAR60  = 1U << NIP_VAR60,   ///< Var 60+x paramter
+	NIP_BIT_REG100 = 1U << NIP_REG100,  ///< Temporary storage register 100.
+	NIP_BIT_REG101 = 1U << NIP_REG101,
+	NIP_BIT_REG10E = 1U << NIP_REG10E,
+	NIP_BIT_REG10F = 1U << NIP_REG10F,
+};
+DECLARE_ENUM_AS_BIT_SET(NIParameterBits)
+
+/**
  * The type of a property to show. This is used to
  * provide an appropriate representation in the GUI.
  */
@@ -106,7 +135,11 @@ static const int CBM_NO_BIT = UINT8_MAX;
 struct NIVariable {
 	const char *name;
 	byte var;
+	NIParameterBits params;
 };
+
+/** Parameter values to NewGRF inspect stuff */
+typedef uint32 NIParameters[NIP_END];
 
 /** Helper class to wrap some functionality/queries in. */
 class NIHelper {
@@ -156,14 +189,30 @@ public:
 	virtual uint32 GetGRFID(uint index) const = 0;
 
 	/**
-	 * Resolve (action2) variable for a given index.
-	 * @param index The (instance) index to resolve the variable for.
+	 * Resolve (action2) variable for a given scope.
+	 * @param scope Scope of the variable.
 	 * @param var   The variable to actually resolve.
-	 * @param param The varaction2 0x60+x parameter to pass.
+	 * @param param Additional parameters to pass.
 	 * @param avail Return whether the variable is available.
 	 * @return The resolved variable's value.
 	 */
-	virtual uint Resolve(uint index, uint var, uint param, bool *avail) const = 0;
+	uint Resolve(ScopeResolver *scope, uint var, const NIParameters &param, bool *avail) const
+	{
+		for (uint i = 0; i <= 0x0F; i++) {
+			SetRegister(0x100 + i, param[NIP_REG100 + i]);
+		}
+		return scope->GetVariable(var, param[NIP_VAR60], avail);
+	}
+
+	/**
+	 * Resolve (action2) variable for a given index.
+	 * @param index The (instance) index to resolve the variable for.
+	 * @param var   The variable to actually resolve.
+	 * @param param Additional parameters to pass.
+	 * @param avail Return whether the variable is available.
+	 * @return The resolved variable's value.
+	 */
+	virtual uint Resolve(uint index, uint var, const NIParameters &param, bool *avail) const = 0;
 
 	/**
 	 * Used to decide if the PSA needs a parameter or not.
@@ -275,8 +324,8 @@ struct NewGRFInspectWindow : Window {
 	static const int TOP_OFFSET    = 5; ///< Position of top edge
 	static const int BOTTOM_OFFSET = 5; ///< Position of bottom edge
 
-	/** The value for the variable 60 parameters. */
-	static uint32 var60params[GSF_FAKE_END][0x20];
+	/** The parameters for the variables. */
+	static NIParameters varparams[GSF_FAKE_END][0x100];
 
 	/** GRFID of the caller of this window, 0 if it has no caller. */
 	uint32 caller_grfid;
@@ -288,16 +337,6 @@ struct NewGRFInspectWindow : Window {
 	byte current_edit_param;
 
 	Scrollbar *vscroll;
-
-	/**
-	 * Check whether the given variable has a parameter.
-	 * @param variable the variable to check.
-	 * @return true iff the variable has a parameter.
-	 */
-	static bool HasVariableParameter(uint variable)
-	{
-		return IsInsideBS(variable, 0x60, 0x20);
-	}
 
 	/**
 	 * Set the GRFID of the item opening this window.
@@ -460,15 +499,28 @@ struct NewGRFInspectWindow : Window {
 			this->DrawString(r, i++, "Variables:");
 			for (const NIVariable *niv = nif->variables; niv->name != NULL; niv++) {
 				bool avail = true;
-				uint param = HasVariableParameter(niv->var) ? NewGRFInspectWindow::var60params[GetFeatureNum(this->window_number)][niv->var - 0x60] : 0;
+				NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][niv->var];
 				uint value = nih->Resolve(index, niv->var, param, &avail);
 
-				if (!avail) continue;
-
-				if (HasVariableParameter(niv->var)) {
-					this->DrawString(r, i++, "  %02x[%02x]: %08x (%s)", niv->var, param, value, niv->name);
+				char valuestr[32];
+				if (avail) {
+					seprintf(valuestr, lastof(valuestr), "%08x", value);
 				} else {
-					this->DrawString(r, i++, "  %02x: %08x (%s)", niv->var, value, niv->name);
+					seprintf(valuestr, lastof(valuestr), "not available");
+				}
+
+				if (niv->params != NIP_BIT_NONE) {
+					char paramstr[128];
+					char *pos = paramstr;
+					*pos = '\0';
+					for (NIParameter p = NIP_BEGIN; p != NIP_END; p++) {
+						if (!HasBit(niv->params, p)) continue;
+						if (pos != paramstr) pos += seprintf(pos, lastof(paramstr), ", ");
+						pos += seprintf(pos, lastof(paramstr), "%08x", param[p]);
+					}
+					this->DrawString(r, i++, "  %02x[%s]: %s (%s)", niv->var, paramstr, valuestr, niv->name);
+				} else {
+					this->DrawString(r, i++, "  %02x: %s (%s)", niv->var, valuestr, niv->name);
 				}
 			}
 		}
@@ -588,10 +640,11 @@ struct NewGRFInspectWindow : Window {
 				for (const NIVariable *niv = nif->variables; niv->name != NULL; niv++, line--) {
 					if (line != 1) continue; // 1 because of the "Variables:" line
 
-					if (!HasVariableParameter(niv->var)) break;
-
-					this->current_edit_param = niv->var;
-					ShowQueryString(STR_EMPTY, STR_NEWGRF_INSPECT_QUERY_CAPTION, 9, this, CS_HEXADECIMAL, QSF_NONE);
+					if (niv->params != NIP_BIT_NONE) {
+						this->current_edit_param = niv->var;
+						ShowQueryString(STR_EMPTY, STR_NEWGRF_INSPECT_QUERY_CAPTION, 9, this, CS_HEXADECIMAL, QSF_NONE);
+					}
+					break;
 				}
 			}
 		}
@@ -601,7 +654,7 @@ struct NewGRFInspectWindow : Window {
 	{
 		if (StrEmpty(str)) return;
 
-		NewGRFInspectWindow::var60params[GetFeatureNum(this->window_number)][this->current_edit_param - 0x60] = strtol(str, NULL, 16);
+		NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][this->current_edit_param][NIP_VAR60] = strtol(str, NULL, 16); // TODO
 		this->SetDirty();
 	}
 
@@ -627,7 +680,7 @@ struct NewGRFInspectWindow : Window {
 	}
 };
 
-/* static */ uint32 NewGRFInspectWindow::var60params[GSF_FAKE_END][0x20] = { {0} }; // Use spec to have 0s in whole array
+/* static */ NIParameters NewGRFInspectWindow::varparams[GSF_FAKE_END][0x100] = { }; // Use spec to have 0s in whole array
 
 static const NWidgetPart _nested_newgrf_inspect_chain_widgets[] = {
 	NWidget(NWID_HORIZONTAL),
