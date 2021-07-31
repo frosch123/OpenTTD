@@ -4541,7 +4541,7 @@ static const SpriteGroup *GetGroupFromGroupID(byte setid, byte type, uint16 grou
 {
 	if (HasBit(groupid, 15)) {
 		assert(CallbackResultSpriteGroup::CanAllocateItem());
-		return new CallbackResultSpriteGroup(groupid, _cur.grffile->grf_version >= 8);
+		return new CallbackResultSpriteGroup(_cur.nfo_line, groupid, _cur.grffile->grf_version >= 8);
 	}
 
 	if (groupid > MAX_SPRITEGROUP || _cur.spritegroups[groupid] == NULL) {
@@ -4564,7 +4564,7 @@ static const SpriteGroup *CreateGroupFromGroupID(byte feature, byte setid, byte 
 {
 	if (HasBit(spriteid, 15)) {
 		assert(CallbackResultSpriteGroup::CanAllocateItem());
-		return new CallbackResultSpriteGroup(spriteid, _cur.grffile->grf_version >= 8);
+		return new CallbackResultSpriteGroup(_cur.nfo_line, spriteid, _cur.grffile->grf_version >= 8);
 	}
 
 	if (!_cur.IsValidSpriteSet(feature, spriteid)) {
@@ -4579,7 +4579,7 @@ static const SpriteGroup *CreateGroupFromGroupID(byte feature, byte setid, byte 
 	assert(spriteset_start + num_sprites <= _cur.spriteid);
 
 	assert(ResultSpriteGroup::CanAllocateItem());
-	return new ResultSpriteGroup(spriteset_start, num_sprites);
+	return new ResultSpriteGroup(_cur.nfo_line, spriteset_start, num_sprites);
 }
 
 /* Action 0x02 */
@@ -4618,7 +4618,7 @@ static void NewSpriteGroup(ByteReader *buf)
 			byte varsize;
 
 			assert(DeterministicSpriteGroup::CanAllocateItem());
-			DeterministicSpriteGroup *group = new DeterministicSpriteGroup();
+			DeterministicSpriteGroup *group = new DeterministicSpriteGroup(_cur.nfo_line);
 			act_group = group;
 			group->var_scope = HasBit(type, 1) ? VSG_SCOPE_PARENT : VSG_SCOPE_SELF;
 
@@ -4686,7 +4686,7 @@ static void NewSpriteGroup(ByteReader *buf)
 		case 0x84: // Relative scope
 		{
 			assert(RandomizedSpriteGroup::CanAllocateItem());
-			RandomizedSpriteGroup *group = new RandomizedSpriteGroup();
+			RandomizedSpriteGroup *group = new RandomizedSpriteGroup(_cur.nfo_line);
 			act_group = group;
 			group->var_scope = HasBit(type, 1) ? VSG_SCOPE_PARENT : VSG_SCOPE_SELF;
 
@@ -4732,7 +4732,7 @@ static void NewSpriteGroup(ByteReader *buf)
 					}
 
 					assert(RealSpriteGroup::CanAllocateItem());
-					RealSpriteGroup *group = new RealSpriteGroup();
+					RealSpriteGroup *group = new RealSpriteGroup(_cur.nfo_line);
 					act_group = group;
 
 					group->num_loaded  = num_loaded;
@@ -4765,7 +4765,7 @@ static void NewSpriteGroup(ByteReader *buf)
 					byte num_building_sprites = max((uint8)1, type);
 
 					assert(TileLayoutSpriteGroup::CanAllocateItem());
-					TileLayoutSpriteGroup *group = new TileLayoutSpriteGroup();
+					TileLayoutSpriteGroup *group = new TileLayoutSpriteGroup(_cur.nfo_line);
 					act_group = group;
 
 					/* On error, bail out immediately. Temporary GRF data was already freed */
@@ -4780,7 +4780,7 @@ static void NewSpriteGroup(ByteReader *buf)
 					}
 
 					assert(IndustryProductionSpriteGroup::CanAllocateItem());
-					IndustryProductionSpriteGroup *group = new IndustryProductionSpriteGroup();
+					IndustryProductionSpriteGroup *group = new IndustryProductionSpriteGroup(_cur.nfo_line);
 					act_group = group;
 					group->version = type;
 					if (type == 0) {

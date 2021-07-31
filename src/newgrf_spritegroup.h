@@ -69,7 +69,7 @@ extern SpriteGroupPool _spritegroup_pool;
 /* Common wrapper for all the different sprite group types */
 struct SpriteGroup : SpriteGroupPool::PoolItem<&_spritegroup_pool> {
 protected:
-	SpriteGroup(SpriteGroupType type) : type(type) {}
+	SpriteGroup(SpriteGroupType type, uint spritenum) : type(type), spritenum(spritenum) {}
 	/** Base sprite group resolver */
 	virtual const SpriteGroup *Resolve(ResolverObject &object) const { return this; };
 
@@ -77,6 +77,7 @@ public:
 	virtual ~SpriteGroup() {}
 
 	SpriteGroupType type;
+	uint spritenum;        ///< Sprite number within the NewGRF.
 
 	virtual SpriteID GetResult() const { return 0; }
 	virtual byte GetNumResults() const { return 0; }
@@ -89,7 +90,7 @@ public:
 /* 'Real' sprite groups contain a list of other result or callback sprite
  * groups. */
 struct RealSpriteGroup : SpriteGroup {
-	RealSpriteGroup() : SpriteGroup(SGT_REAL) {}
+	RealSpriteGroup(uint spritenum) : SpriteGroup(SGT_REAL, spritenum) {}
 	~RealSpriteGroup();
 
 	/* Loaded = in motion, loading = not moving
@@ -180,7 +181,7 @@ struct DeterministicSpriteGroupRange {
 
 
 struct DeterministicSpriteGroup : SpriteGroup {
-	DeterministicSpriteGroup() : SpriteGroup(SGT_DETERMINISTIC) {}
+	DeterministicSpriteGroup(uint spritenum) : SpriteGroup(SGT_DETERMINISTIC, spritenum) {}
 	~DeterministicSpriteGroup();
 
 	VarSpriteGroupScope var_scope;
@@ -203,7 +204,7 @@ enum RandomizedSpriteGroupCompareMode {
 };
 
 struct RandomizedSpriteGroup : SpriteGroup {
-	RandomizedSpriteGroup() : SpriteGroup(SGT_RANDOMIZED) {}
+	RandomizedSpriteGroup(uint spritenum) : SpriteGroup(SGT_RANDOMIZED, spritenum) {}
 	~RandomizedSpriteGroup();
 
 	VarSpriteGroupScope var_scope;  ///< Take this object:
@@ -227,11 +228,12 @@ protected:
 struct CallbackResultSpriteGroup : SpriteGroup {
 	/**
 	 * Creates a spritegroup representing a callback result
+	 * @param spritenum Sprite number within the NewGRF.
 	 * @param value The value that was used to represent this callback result
 	 * @param grf_version8 True, if we are dealing with a new NewGRF which uses GRF version >= 8.
 	 */
-	CallbackResultSpriteGroup(uint16 value, bool grf_version8) :
-		SpriteGroup(SGT_CALLBACK),
+	CallbackResultSpriteGroup(uint spritenum, uint16 value, bool grf_version8) :
+		SpriteGroup(SGT_CALLBACK, spritenum),
 		result(value)
 	{
 		/* Old style callback results (only valid for version < 8) have the highest byte 0xFF so signify it is a callback result.
@@ -253,12 +255,13 @@ struct CallbackResultSpriteGroup : SpriteGroup {
 struct ResultSpriteGroup : SpriteGroup {
 	/**
 	 * Creates a spritegroup representing a sprite number result.
+	 * @param spritenum Sprite number within the NewGRF.
 	 * @param sprite The sprite number.
 	 * @param num_sprites The number of sprites per set.
 	 * @return A spritegroup representing the sprite number result.
 	 */
-	ResultSpriteGroup(SpriteID sprite, byte num_sprites) :
-		SpriteGroup(SGT_RESULT),
+	ResultSpriteGroup(uint spritenum, SpriteID sprite, byte num_sprites) :
+		SpriteGroup(SGT_RESULT, spritenum),
 		sprite(sprite),
 		num_sprites(num_sprites)
 	{
@@ -274,7 +277,7 @@ struct ResultSpriteGroup : SpriteGroup {
  * Action 2 sprite layout for houses, industry tiles, objects and airport tiles.
  */
 struct TileLayoutSpriteGroup : SpriteGroup {
-	TileLayoutSpriteGroup() : SpriteGroup(SGT_TILELAYOUT) {}
+	TileLayoutSpriteGroup(uint spritenum) : SpriteGroup(SGT_TILELAYOUT, spritenum) {}
 	~TileLayoutSpriteGroup() {}
 
 	NewGRFSpriteLayout dts;
@@ -283,7 +286,7 @@ struct TileLayoutSpriteGroup : SpriteGroup {
 };
 
 struct IndustryProductionSpriteGroup : SpriteGroup {
-	IndustryProductionSpriteGroup() : SpriteGroup(SGT_INDUSTRY_PRODUCTION) {}
+	IndustryProductionSpriteGroup(uint spritenum) : SpriteGroup(SGT_INDUSTRY_PRODUCTION, spritenum) {}
 
 	uint8 version;
 	int16 subtract_input[3];  // signed
