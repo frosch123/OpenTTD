@@ -22,9 +22,9 @@ enum NewGRFInspectWidgets {
 	WID_NGRFI_MAINPANEL, ///< Panel widget containing the actual data.
 	WID_NGRFI_SCROLLBAR, ///< Scrollbar.
 	WID_NGRFI_PARAM_SEL,                                    ///< Selection panes to hide parameters.
-	WID_NGRFI_PARAM_LABEL   = WID_NGRFI_PARAM_SEL   + 0x11, ///< Parameter labels.
-	WID_NGRFI_PARAM_EDIT    = WID_NGRFI_PARAM_LABEL + 0x11, ///< Parameter editboxes.
-	WID_NGRFI_END           = WID_NGRFI_PARAM_EDIT  + 0x11
+	WID_NGRFI_PARAM_LABEL   = WID_NGRFI_PARAM_SEL   + 0x13, ///< Parameter labels.
+	WID_NGRFI_PARAM_EDIT    = WID_NGRFI_PARAM_LABEL + 0x13, ///< Parameter editboxes.
+	WID_NGRFI_RESULT        = WID_NGRFI_PARAM_EDIT  + 0x13, ///< Callback result
 };
 
 /** Widgets of the #SpriteAlignerWindow class. */

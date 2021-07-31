@@ -77,6 +77,8 @@ enum NIParameter {
 	NIP_BEGIN    = 0,
 
 	NIP_VAR60    = NIP_BEGIN,           ///< Var 60+x parameter.
+	NIP_VAR10,                          ///< Callback info 1.
+	NIP_VAR18,                          ///< Callback info 2.
 	NIP_REG100,                         ///< Temporary storage register 100 to 10F.
 	NIP_REG101   = NIP_REG100 + 0x01,
 	NIP_REG10E   = NIP_REG100 + 0x0E,
@@ -87,7 +89,7 @@ enum NIParameter {
 DECLARE_POSTFIX_INCREMENT(NIParameter)
 assert_compile(WID_NGRFI_PARAM_LABEL == WID_NGRFI_PARAM_SEL   + NIP_END);
 assert_compile(WID_NGRFI_PARAM_EDIT  == WID_NGRFI_PARAM_LABEL + NIP_END);
-assert_compile(WID_NGRFI_END         == WID_NGRFI_PARAM_EDIT  + NIP_END);
+assert_compile(WID_NGRFI_RESULT      == WID_NGRFI_PARAM_EDIT  + NIP_END);
 
 /**
  * Bitset of NIParameter.
@@ -95,6 +97,8 @@ assert_compile(WID_NGRFI_END         == WID_NGRFI_PARAM_EDIT  + NIP_END);
 enum NIParameterBits {
 	NIP_BIT_NONE   = 0U,
 	NIP_BIT_VAR60  = 1U << NIP_VAR60,   ///< Var 60+x paramter
+	NIP_BIT_VAR10  = 1U << NIP_VAR10,   ///< Callback info 1.
+	NIP_BIT_VAR18  = 1U << NIP_VAR18,   ///< Callback info 2.
 	NIP_BIT_REG100 = 1U << NIP_REG100,  ///< Temporary storage register 100.
 	NIP_BIT_REG101 = 1U << NIP_REG101,
 	NIP_BIT_REG10E = 1U << NIP_REG10E,
@@ -104,6 +108,8 @@ DECLARE_ENUM_AS_BIT_SET(NIParameterBits)
 
 static const char * const _newgrf_parameter_names[] = {
 	"60+x parameter",
+	"Variable 10",
+	"Variable 18",
 	"Register 100",
 	"Register 101",
 	"Register 102",
@@ -122,6 +128,53 @@ static const char * const _newgrf_parameter_names[] = {
 	"Register 10F",
 };
 assert_compile(lengthof(_newgrf_parameter_names) == NIP_END);
+
+/**
+ * Return values of callbacks.
+ */
+enum NICBResult {
+	NICBR_BEGIN,
+
+	NICBR_RESULT   = NICBR_BEGIN,         ///< Normal callback result.
+	NICBR_REG100,                         ///< Temporary storage register 100 to 10F.
+
+	NICBR_END      = NICBR_REG100 + 0x10
+};
+
+DECLARE_POSTFIX_INCREMENT(NICBResult)
+
+/**
+ * Bitset of NICBResult.
+ */
+enum NICBResultBits {
+	NICBR_BIT_NONE       = 0U,
+	NICBR_BIT_RESULT     = 1U << NICBR_RESULT,    ///< Normal callback result.
+	NICBR_BIT_REG100     = 1U << NICBR_REG100,    ///< Temporary storage register 100.
+	NICBR_BIT_TEXTSTACK4 = 0x0FU << NICBR_REG100, ///< 4 register textstack 100..103
+	NICBR_BIT_TEXTSTACK6 = 0x3FU << NICBR_REG100, ///< 6 register textstack 100..105
+};
+DECLARE_ENUM_AS_BIT_SET(NICBResultBits)
+
+static const char * const _newgrf_cbresult_names[] = {
+	"Result",
+	"Register 100",
+	"Register 101",
+	"Register 102",
+	"Register 103",
+	"Register 104",
+	"Register 105",
+	"Register 106",
+	"Register 107",
+	"Register 108",
+	"Register 109",
+	"Register 10A",
+	"Register 10B",
+	"Register 10C",
+	"Register 10D",
+	"Register 10E",
+	"Register 10F",
+};
+assert_compile(lengthof(_newgrf_cbresult_names) == NICBR_END);
 
 /**
  * The type of a property to show. This is used to
@@ -152,6 +205,8 @@ struct NICallback {
 	byte read_size;   ///< The number of bytes (i.e. byte, word, dword etc) to read
 	byte cb_bit;      ///< The bit that needs to be set for this callback to be enabled
 	uint16 cb_id;     ///< The number of the callback
+	NIParameterBits params; ///< Parameters to the callback
+	NICBResultBits results; ///< Results from the callback
 };
 /** Mask to show no bit needs to be enabled for the callback. */
 static const int CBM_NO_BIT = UINT8_MAX;
@@ -163,8 +218,19 @@ struct NIVariable {
 	NIParameterBits params;
 };
 
-/** Parameter values to NewGRF inspect stuff */
-typedef uint32 NIParameters[NIP_END];
+/**
+ * Parameter values to NewGRF inspect stuff.
+ * This is basically a 'typedef uint32 NIParameters[NIP_END]', but with default constructor, so it is suitable for SDL containers.
+ */
+struct NIParameters {
+	uint32 param[NIP_END];
+
+	uint32 &operator[](uint index) { return param[index]; }
+	const uint32 &operator[](uint index) const { return param[index]; }
+};
+
+/** Result values of callbacks */
+typedef uint32 NICBResults[NICBR_END];
 
 /** Helper class to wrap some functionality/queries in. */
 class NIHelper {
@@ -238,6 +304,33 @@ public:
 	 * @return The resolved variable's value.
 	 */
 	virtual uint Resolve(uint index, uint var, const NIParameters &param, bool *avail) const = 0;
+
+	/**
+	 * Resolve callback
+	 * @param ro ResolverObject to resolve callback for
+	 * @param cb Callback to call
+	 * @param param Addtional paramters
+	 * @param [out] result Result values
+	 */
+	void ResolveCB(ResolverObject &ro, CallbackID cb, const NIParameters &param, NICBResults &result) const
+	{
+		ro.callback = cb;
+		ro.callback_param1 = param[NIP_VAR10];
+		ro.callback_param2 = param[NIP_VAR18];
+		result[NICBR_RESULT] = ro.ResolveCallback();
+		for (uint i = 0; i <= 0x0F; i++) {
+			result[NICBR_REG100 + i] = GetRegister(0x100 + i);
+		}
+	}
+
+	/**
+	 * Resolve callback for a given index.
+	 * @param index The (instance) index to resolve the variable for.
+	 * @param cb    The callback ID to actually resolve.
+	 * @param param Additional parameters to pass.
+	 * @param [out] result Callback result and return values.
+	 */
+	virtual void ResolveCB(uint index, CallbackID cb, const NIParameters &param, NICBResults &result) const = 0;
 
 	/**
 	 * Used to decide if the PSA needs a parameter or not.
@@ -349,8 +442,30 @@ struct NewGRFInspectWindow : Window {
 	static const int TOP_OFFSET    = 5; ///< Position of top edge
 	static const int BOTTOM_OFFSET = 5; ///< Position of bottom edge
 
+	/** Identifies a row */
+	struct RowKey {
+		uint type;
+		uint id;
+
+		RowKey() : type(0), id(0) {}
+
+		RowKey(const NIVariable *niv) : type(1), id(niv->var) {}
+		RowKey(const NICallback *nic) : type(2), id(nic->cb_id) {}
+
+		bool operator==(const RowKey &other) const
+		{
+			return this->type == other.type && this->id == other.id;
+		}
+
+		bool operator<(const RowKey &other) const
+		{
+			if (this->type != other.type) return this->type < other.type;
+			return this->id < other.id;
+		}
+	};
+
 	/** The parameters for the variables. */
-	static NIParameters varparams[GSF_FAKE_END][0x100];
+	static std::map<RowKey, NIParameters> varparams[GSF_FAKE_END];
 
 	/** GRFID of the caller of this window, 0 if it has no caller. */
 	uint32 caller_grfid;
@@ -359,7 +474,8 @@ struct NewGRFInspectWindow : Window {
 	uint chain_index;
 
 	/** The currently edited parameter, to update the right one. */
-	byte current_edit_param;
+	RowKey current_edit_param;
+	const NICallback *current_edit_callback;
 
 	Scrollbar *vscroll;
 	QueryString *editboxes[NIP_END];   ///< Editboxes for parameters
@@ -467,6 +583,12 @@ struct NewGRFInspectWindow : Window {
 
 				size->height = 5 * FONT_HEIGHT_NORMAL + TOP_OFFSET + BOTTOM_OFFSET;
 				break;
+
+			case WID_NGRFI_RESULT: {
+				uint rows = this->current_edit_callback != NULL ? CountBits(this->current_edit_callback->results) : 0;
+				size->height = rows * FONT_HEIGHT_NORMAL + WD_FRAMERECT_TOP + WD_FRAMERECT_BOTTOM;
+				break;
+			}
 		}
 	}
 
@@ -531,6 +653,29 @@ struct NewGRFInspectWindow : Window {
 				}
 				break;
 			}
+
+			case WID_NGRFI_RESULT:
+				if (this->current_edit_callback != NULL) {
+					uint index = this->GetFeatureIndex();
+					const NIFeature *nif = GetFeature(this->window_number);
+					const NIHelper *nih = nif->helper;
+					NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][this->current_edit_param];
+					NICBResults results;
+					nih->ResolveCB(index, (CallbackID)this->current_edit_callback->cb_id, param, results);
+					uint row = 0;
+					for (NICBResult i = NICBR_BEGIN; i != NICBR_END; i++) {
+						if (!HasBit(this->current_edit_callback->results, i)) continue;
+						char valuestr[32];
+						if (i == NICBR_RESULT && results[i] == CALLBACK_FAILED) {
+							seprintf(valuestr, lastof(valuestr), "%s: failed", _newgrf_cbresult_names[i]);
+						} else {
+							seprintf(valuestr, lastof(valuestr), "%s: %08x", _newgrf_cbresult_names[i], results[i]);
+						}
+						::DrawString(r.left + WD_FRAMERECT_LEFT, r.right - WD_FRAMERECT_RIGHT, r.top + WD_FRAMERECT_TOP + row * FONT_HEIGHT_NORMAL, valuestr, TC_BLACK);
+						row++;
+					}
+				}
+				break;
 		}
 
 		if (widget != WID_NGRFI_MAINPANEL) return;
@@ -546,7 +691,7 @@ struct NewGRFInspectWindow : Window {
 			this->DrawString(r, i++, false, "Variables:");
 			for (const NIVariable *niv = nif->variables; niv->name != NULL; niv++) {
 				bool avail = true;
-				NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][niv->var];
+				NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][niv];
 				uint value = nih->Resolve(index, niv->var, param, &avail);
 
 				char valuestr[32];
@@ -565,9 +710,60 @@ struct NewGRFInspectWindow : Window {
 						if (pos != paramstr) pos += seprintf(pos, lastof(paramstr), ", ");
 						pos += seprintf(pos, lastof(paramstr), "%08x", param[p]);
 					}
-					this->DrawString(r, i++, this->current_edit_param == niv->var, "  %02x[%s]: %s (%s)", niv->var, paramstr, valuestr, niv->name);
+					this->DrawString(r, i++, this->current_edit_param == niv, "  %02x[%s]: %s (%s)", niv->var, paramstr, valuestr, niv->name);
 				} else {
-					this->DrawString(r, i++, this->current_edit_param == niv->var, "  %02x: %s (%s)", niv->var, valuestr, niv->name);
+					this->DrawString(r, i++, this->current_edit_param == niv, "  %02x: %s (%s)", niv->var, valuestr, niv->name);
+				}
+			}
+		}
+
+		if (nif->callbacks != NULL) {
+			this->DrawString(r, i++, false, "Callbacks:");
+			for (const NICallback *nic = nif->callbacks; nic->name != NULL; nic++) {
+				NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][nic];
+
+				char paramstr[128];
+				char *pos = paramstr;
+				*pos = '\0';
+				for (NIParameter p = NIP_BEGIN; p != NIP_END; p++) {
+					if (!HasBit(nic->params, p)) continue;
+					if (pos != paramstr) {
+						pos += seprintf(pos, lastof(paramstr), ", ");
+					} else {
+						pos += seprintf(pos, lastof(paramstr), "[");
+					}
+					pos += seprintf(pos, lastof(paramstr), "%08x", param[p]);
+				}
+				if (pos != paramstr) seprintf(pos, lastof(paramstr), "]");
+
+				NICBResults results;
+				nih->ResolveCB(index, (CallbackID)nic->cb_id, param, results);
+				char valuestr[32];
+				if (!HasBit(nic->results, NICBR_RESULT)) {
+					valuestr[0] = '\0';
+				} else if (results[NICBR_RESULT] != CALLBACK_FAILED) {
+					seprintf(valuestr, lastof(valuestr), "%08x", results[NICBR_RESULT]);
+				} else {
+					seprintf(valuestr, lastof(valuestr), "failed");
+				}
+
+				if (nic->cb_bit != CBM_NO_BIT) {
+					const void *ptr = (const byte *)base_spec + nic->offset;
+					uint value;
+					switch (nic->read_size) {
+						case 1: value = *(const uint8  *)ptr; break;
+						case 2: value = *(const uint16 *)ptr; break;
+						case 4: value = *(const uint32 *)ptr; break;
+						default: NOT_REACHED();
+					}
+
+					if (HasBit(value, nic->cb_bit)) {
+						this->DrawString(r, i++, this->current_edit_param == nic, "  %03x%s: %s (%s)", nic->cb_id, paramstr, valuestr, nic->name);
+					} else {
+						this->DrawString(r, i++, this->current_edit_param == nic, "  %03x: masked (%s)", nic->cb_id, nic->name);
+					}
+				} else {
+					this->DrawString(r, i++, this->current_edit_param == nic, "  %03x%s: %s (%s, unmasked)", nic->cb_id, paramstr, valuestr, nic->name);
 				}
 			}
 		}
@@ -619,27 +815,6 @@ struct NewGRFInspectWindow : Window {
 			}
 		}
 
-		if (nif->callbacks != NULL) {
-			this->DrawString(r, i++, false, "Callbacks:");
-			for (const NICallback *nic = nif->callbacks; nic->name != NULL; nic++) {
-				if (nic->cb_bit != CBM_NO_BIT) {
-					const void *ptr = (const byte *)base_spec + nic->offset;
-					uint value;
-					switch (nic->read_size) {
-						case 1: value = *(const uint8  *)ptr; break;
-						case 2: value = *(const uint16 *)ptr; break;
-						case 4: value = *(const uint32 *)ptr; break;
-						default: NOT_REACHED();
-					}
-
-					if (!HasBit(value, nic->cb_bit)) continue;
-					this->DrawString(r, i++, false, "  %03x: %s", nic->cb_id, nic->name);
-				} else {
-					this->DrawString(r, i++, false, "  %03x: %s (unmasked)", nic->cb_id, nic->name);
-				}
-			}
-		}
-
 		/* Not nice and certainly a hack, but it beats duplicating
 		 * this whole function just to count the actual number of
 		 * elements. Especially because they need to be redrawn. */
@@ -688,8 +863,9 @@ struct NewGRFInspectWindow : Window {
 				for (const NIVariable *niv = nif->variables; niv->name != NULL; niv++, line--) {
 					if (line != 1) continue; // 1 because of the "Variables:" line
 
-					this->current_edit_param = niv->var;
-					NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][niv->var];
+					this->current_edit_param = niv;
+					this->current_edit_callback = NULL;
+					NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][niv];
 					for (NIParameter i = NIP_BEGIN; i != NIP_END; i++) {
 						bool active = HasBit(niv->params, i);
 						this->SetWidgetDisabledState(WID_NGRFI_PARAM_EDIT + i, !active);
@@ -702,6 +878,26 @@ struct NewGRFInspectWindow : Window {
 					}
 					break;
 				}
+
+				for (const NICallback *nic = nif->callbacks; nic->name != NULL; nic++, line--) {
+					if (line != 2) continue; // 2 because of the "Variables:" and "Callbacks:" line
+
+					this->current_edit_param = nic;
+					this->current_edit_callback = nic;
+					NIParameters &param = NewGRFInspectWindow::varparams[GetFeatureNum(this->window_number)][nic];
+					for (NIParameter i = NIP_BEGIN; i != NIP_END; i++) {
+						bool active = HasBit(nic->params, i);
+						this->SetWidgetDisabledState(WID_NGRFI_PARAM_EDIT + i, !active);
+						this->GetWidget<NWidgetStacked>(WID_NGRFI_PARAM_SEL + i)->SetDisplayedPlane(active ? 0 : SZSP_HORIZONTAL);
+						if (active) {
+							char buf[16];
+							snprintf(buf, sizeof(buf), "%08x", param[i]);
+							this->editboxes[i]->text.Assign(buf);
+						}
+					}
+					break;
+				}
+
 				this->ReInit();
 				break;
 			}
@@ -739,7 +935,7 @@ struct NewGRFInspectWindow : Window {
 	}
 };
 
-/* static */ NIParameters NewGRFInspectWindow::varparams[GSF_FAKE_END][0x100] = { }; // Use spec to have 0s in whole array
+/* static */ std::map<NewGRFInspectWindow::RowKey, NIParameters> NewGRFInspectWindow::varparams[GSF_FAKE_END];
 
 #define NWID_PARAMETER_ROW(nip) \
 	NWidget(NWID_SELECTION, INVALID_COLOUR, WID_NGRFI_PARAM_SEL + (nip)), \
@@ -769,24 +965,30 @@ static const NWidgetPart _nested_newgrf_inspect_chain_widgets[] = {
 		NWidget(NWID_VSCROLLBAR, COLOUR_GREY, WID_NGRFI_SCROLLBAR),
 	EndContainer(),
 	NWidget(NWID_HORIZONTAL),
-		NWidget(WWT_PANEL, COLOUR_GREY),
-			NWID_PARAMETER_ROW(NIP_VAR60),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x03),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x04),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x05),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x06),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x07),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x08),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x09),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0A),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0B),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0C),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0D),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0E),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0F),
+		NWidget(NWID_HORIZONTAL, NC_EQUALSIZE),
+			NWidget(WWT_PANEL, COLOUR_GREY),
+				NWID_PARAMETER_ROW(NIP_VAR60),
+				NWID_PARAMETER_ROW(NIP_VAR10),
+				NWID_PARAMETER_ROW(NIP_VAR18),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x03),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x04),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x05),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x06),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x07),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x08),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x09),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0A),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0B),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0C),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0D),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0E),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0F),
+			EndContainer(),
+			NWidget(WWT_PANEL, COLOUR_GREY, WID_NGRFI_RESULT), SetFill(1, 1), SetResize(1, 0),
+			EndContainer(),
 		EndContainer(),
 		NWidget(WWT_PANEL, COLOUR_GREY),
 			NWidget(NWID_SPACER), SetFill(0, 1),
@@ -809,24 +1011,30 @@ static const NWidgetPart _nested_newgrf_inspect_widgets[] = {
 		NWidget(NWID_VSCROLLBAR, COLOUR_GREY, WID_NGRFI_SCROLLBAR),
 	EndContainer(),
 	NWidget(NWID_HORIZONTAL),
-		NWidget(WWT_PANEL, COLOUR_GREY),
-			NWID_PARAMETER_ROW(NIP_VAR60),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x03),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x04),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x05),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x06),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x07),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x08),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x09),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0A),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0B),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0C),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0D),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0E),
-			NWID_PARAMETER_ROW(NIP_REG100 + 0x0F),
+		NWidget(NWID_HORIZONTAL, NC_EQUALSIZE),
+			NWidget(WWT_PANEL, COLOUR_GREY),
+				NWID_PARAMETER_ROW(NIP_VAR60),
+				NWID_PARAMETER_ROW(NIP_VAR10),
+				NWID_PARAMETER_ROW(NIP_VAR18),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x00),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x01),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x02),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x03),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x04),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x05),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x06),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x07),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x08),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x09),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0A),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0B),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0C),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0D),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0E),
+				NWID_PARAMETER_ROW(NIP_REG100 + 0x0F),
+			EndContainer(),
+			NWidget(WWT_PANEL, COLOUR_GREY, WID_NGRFI_RESULT), SetFill(1, 1), SetResize(1, 0),
+			EndContainer(),
 		EndContainer(),
 		NWidget(WWT_PANEL, COLOUR_GREY),
 			NWidget(NWID_SPACER), SetFill(0, 1),
